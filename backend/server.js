@@ -40,6 +40,27 @@ const server = http.createServer(async (request, response) => {
       return;
     }
 
+    if (url.pathname === "/api/file" && request.method === "GET") {
+      const filePath = url.searchParams.get("path") || "";
+      if (!filePath.startsWith("/tmp/") && !filePath.startsWith("/private/")) {
+        sendJson(response, 403, { error: "File path is not allowed." });
+        return;
+      }
+      fs.readFile(filePath, (error, data) => {
+        if (error) {
+          sendJson(response, 404, { error: "File not found." });
+          return;
+        }
+        const ext = path.extname(filePath).toLowerCase();
+        response.writeHead(200, {
+          "Content-Type": mimeTypes[ext] || "image/png",
+          "Cache-Control": "no-store"
+        });
+        response.end(data);
+      });
+      return;
+    }
+
     serveStatic(url, response);
   } catch (error) {
     sendJson(response, error.statusCode || 500, {

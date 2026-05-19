@@ -303,7 +303,7 @@ function extractImageUrl(data) {
   }
 
   if (typeof data === "string") {
-    return data;
+    return looksLikeImageReference(data) ? data : "";
   }
 
   if (Array.isArray(data)) {
@@ -318,7 +318,7 @@ function extractImageUrl(data) {
     return `data:image/png;base64,${data.result}`;
   }
 
-  const direct = data.output || data.result || data.image || data.image_url || data.url;
+  const direct = data.url || data.path || data.output || data.result || data.image || data.image_url;
   if (direct) {
     return extractImageUrl(direct);
   }
@@ -335,11 +335,17 @@ function extractImageUrl(data) {
     return extractImageUrl(data.output);
   }
 
-  if (data.path) {
-    return data.url || data.path;
-  }
-
   return "";
+}
+
+function looksLikeImageReference(value) {
+  return (
+    value.startsWith("data:image/") ||
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("/") ||
+    /\.(png|jpe?g|webp)(\?.*)?$/i.test(value)
+  );
 }
 
 function writeDataUrl(dataUrl, filePath) {

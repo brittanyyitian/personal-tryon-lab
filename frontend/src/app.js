@@ -444,6 +444,7 @@ function renderResults() {
   bindRatingButtons();
   bindNotes();
   bindRetryButtons();
+  bindResultImages();
 }
 
 function renderResultCard(result, index) {
@@ -452,7 +453,7 @@ function renderResultCard(result, index) {
       ? `<div class="result-image loading">Rendering...</div>`
       : result.status === "error"
         ? `<div class="result-image error">${result.error}<br /><button class="secondary-button retry-button" data-index="${index}" type="button">Retry</button></div>`
-        : `<div class="result-image"><img src="${result.imageUrl}" alt="${result.provider.name} result" /></div>`;
+        : `<div class="result-image"><img src="${result.imageUrl}" alt="${result.provider.name} result" data-result-index="${index}" /></div>`;
 
   return `
     <article class="result-card">
@@ -523,6 +524,17 @@ function bindRetryButtons() {
       await runProvider(state.results[index]);
       elements.saveButton.disabled = !state.results.some((result) => result.status === "success");
     });
+  });
+}
+
+function bindResultImages() {
+  elements.resultGrid.querySelectorAll("[data-result-index]").forEach((image) => {
+    image.addEventListener("error", () => {
+      const index = Number(image.dataset.resultIndex);
+      state.results[index].status = "error";
+      state.results[index].error = `Image failed to load: ${String(state.results[index].imageUrl || "").slice(0, 80)}`;
+      renderResults();
+    }, { once: true });
   });
 }
 
