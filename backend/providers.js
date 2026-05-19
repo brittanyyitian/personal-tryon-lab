@@ -68,6 +68,7 @@ async function runProvider(providerId, payload) {
   assertRemoteConsent(payload);
   assertImageData(payload.personImage, "personImage");
   assertImageData(payload.garmentImage, "garmentImage");
+  assertSupportedItem(providerId, payload.itemType);
 
   if (providerId === "opensource") {
     return runOpenSourceVton(payload);
@@ -177,7 +178,9 @@ async function runOpenAI(apiKey, payload) {
     "Create a restrained fashion try-on concept image for a private non-commercial test.",
     "Keep the person's identity, body proportions, and the garment recognizable.",
     "Use a minimal black, white, and grey editorial studio look.",
-    `Mode: ${payload.mode || "real"}.`
+    `Intent: ${payload.mode || "fit"}.`,
+    `Item type: ${payload.itemType || "top"}.`,
+    `Garment source: ${payload.garmentSource || "flat-lay"}.`
   ].join(" ");
 
   const response = await fetch("https://api.openai.com/v1/responses", {
@@ -236,7 +239,9 @@ async function runOpenSourceVton(payload) {
       personPath,
       garmentPath,
       handle_file,
-      mode: payload.mode
+      mode: payload.mode,
+      itemType: payload.itemType,
+      garmentSource: payload.garmentSource
     }));
 
     const statusMessage = extractStatusMessage(result);
@@ -254,17 +259,17 @@ async function runOpenSourceVton(payload) {
   }
 }
 
-function openSourcePayload(apiName, { personPath, garmentPath, handle_file, mode }) {
+function openSourcePayload(apiName, { personPath, garmentPath, handle_file, mode, itemType, garmentSource }) {
   if (apiName === "/try_on") {
     return {
       person_image: handle_file(personPath),
       garment_image: handle_file(garmentPath),
-      category: "tops",
-      garment_photo_type: "flat-lay",
-      num_timesteps: mode === "real" ? 30 : 40,
-      guidance_scale: mode === "editorial" ? 3 : 2.5,
+      category: fashnSpaceCategory(itemType),
+      garment_photo_type: garmentSource === "model" ? "model" : "flat-lay",
+      num_timesteps: mode === "fit" ? 30 : 40,
+      guidance_scale: mode === "styled" ? 3 : 2.5,
       seed: 42,
-      segmentation_free: true
+      segmentation_free: mode === "styled"
     };
   }
 
@@ -441,18 +446,38 @@ async function normalizeImageForBrowser(imageUrl) {
 
 function openSourceGarmentPrompt(mode) {
   return {
-    real: "a realistic garment",
-    soft: "a clean stylish garment",
-    editorial: "a minimal fashion editorial garment"
+    fit: "a realistic garment",
+    styled: "a clean stylish garment"
   }[mode] || "a realistic garment";
 }
 
 function fashnPrompt(mode) {
   return {
-    real: "Prioritize realistic fit, garment fidelity, and original body proportions.",
-    soft: "Prioritize realistic fit with subtle flattering lighting and clean styling.",
-    editorial: "Create a minimal fashion editorial try-on while keeping the garment recognizable."
+    fit: "Prioritize realistic fit, garment fidelity, and original body proportions.",
+    styled: "Prioritize realistic fit with subtle flattering lighting and clean styling."
   }[mode] || "Prioritize realistic fit, garment fidelity, and original body proportions.";
+}
+
+function fashnSpaceCategory(itemType) {
+  if (itemType === "dress") {
+    return "dresses";
+  }
+  if (["skirt", "pants"].includes(itemType)) {
+    return "bottoms";
+  }
+  return "tops";
+}
+
+function assertSupportedItem(providerId, itemType) {
+  if (!["opensource", "replicate"].includes(providerId)) {
+    return;
+  }
+
+  if (["shoes", "bag", "hat"].includes(itemType)) {
+    const error = new Error("This VTON model is for garments, not accessories. Use Styled Look with an image-edit provider for shoes, bags, or hats.");
+    error.statusCode = 400;
+    throw error;
+  }
 }
 
 function providerError(message, details) {

@@ -276,7 +276,8 @@ h2 {
 }
 
 .pill-row label,
-.segment label {
+.segment label,
+.select-control {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -287,6 +288,15 @@ h2 {
   font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
+}
+
+.select-control {
+  width: 100%;
+  border-top: 0;
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .pill-row input,
@@ -364,6 +374,39 @@ h2 {
   justify-content: flex-start;
   color: var(--muted);
   line-height: 1.45;
+}
+
+.quality-panel {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.quality-panel p {
+  margin: 0;
+}
+
+.quality-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+  text-transform: uppercase;
+}
+
+.quality-good {
+  color: var(--ink);
+}
+
+.quality-warn {
+  color: var(--warn);
+}
+
+.normalize-row {
+  margin-top: 12px;
 }
 
 .action-row {

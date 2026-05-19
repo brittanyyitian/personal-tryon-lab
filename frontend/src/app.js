@@ -55,6 +55,9 @@ const elements = {
   remoteCopy: document.querySelector("#remoteCopy"),
   consentCheckbox: document.querySelector("#consentCheckbox"),
   keyStatus: document.querySelector("#keyStatus"),
+  itemTypeSelect: document.querySelector("#itemTypeSelect"),
+  normalizeToggle: document.querySelector("#normalizeToggle"),
+  qualityPanel: document.querySelector("#qualityPanel"),
   formError: document.querySelector("#formError"),
   generateButton: document.querySelector("#generateButton"),
   resetButton: document.querySelector("#resetButton"),
@@ -209,16 +212,19 @@ function setImage(type, file) {
   const reader = new FileReader();
   reader.onload = async () => {
     const dataUrl = await prepareImageDataUrl(reader.result);
+    const analysis = await analyzeImage(dataUrl);
     const image = {
       name: file.name,
       size: file.size,
-      dataUrl
+      dataUrl,
+      analysis
     };
     state[type] = image;
     previewElement.src = image.dataUrl;
     previewElement.hidden = false;
     dropzoneElement.classList.add("has-image");
     elements.formError.textContent = "";
+    renderQualityPanel();
   };
   reader.readAsDataURL(file);
 }
@@ -239,8 +245,119 @@ async function prepareImageDataUrl(dataUrl) {
   return canvas.toDataURL("image/jpeg", 0.86);
 }
 
+async function analyzeImage(dataUrl) {
+  const image = await loadImage(dataUrl);
+  const canvas = document.createElement("canvas");
+  const maxSide = 256;
+  const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+  canvas.width = Math.max(1, Math.round(image.width * scale));
+  canvas.height = Math.max(1, Math.round(image.height * scale));
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+  const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+  let luminanceSum = 0;
+  let warmCoolSum = 0;
+  let edgeSum = 0;
+  let previousLum = 0;
+  for (let index = 0; index < data.length; index += 4) {
+    const red = data[index];
+    const green = data[index + 1];
+    const blue = data[index + 2];
+    const lum = 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+    luminanceSum += lum;
+    warmCoolSum += red - blue;
+    edgeSum += Math.abs(lum - previousLum);
+    previousLum = lum;
+  }
+
+  const pixels = data.length / 4;
+  return {
+    width: image.width,
+    height: image.height,
+    brightness: luminanceSum / pixels,
+    temperature: warmCoolSum / pixels,
+    clarity: edgeSum / pixels
+  };
+}
+
+function renderQualityPanel() {
+  if (!state.person || !state.garment) {
+    elements.qualityPanel.innerHTML = `<p>Upload both images to check lighting and clarity.</p>`;
+    return;
+  }
+
+  const checks = buildQualityChecks();
+  elements.qualityPanel.innerHTML = checks
+    .map((check) => `
+      <div class="quality-row">
+        <span>${check.label}</span>
+        <strong class="${check.status === "Good" ? "quality-good" : "quality-warn"}">${check.status}</strong>
+      </div>
+      ${check.note ? `<p>${check.note}</p>` : ""}
+    `)
+    .join("");
+}
+
+function buildQualityChecks() {
+  const person = state.person.analysis;
+  const garment = state.garment.analysis;
+  const brightnessGap = Math.abs(person.brightness - garment.brightness);
+  const temperatureGap = Math.abs(person.temperature - garment.temperature);
+  const personLongEnough = Math.max(person.width, person.height) >= 900;
+  const garmentLongEnough = Math.max(garment.width, garment.height) >= 700;
+
+  return [
+    {
+      label: "Person resolution",
+      status: personLongEnough ? "Good" : "Weak",
+      note: personLongEnough ? "" : "Use a larger full-body photo for better body proportions."
+    },
+    {
+      label: "Garment resolution",
+      status: garmentLongEnough ? "Good" : "Weak",
+      note: garmentLongEnough ? "" : "Use a sharper product image for better texture."
+    },
+    {
+      label: "Lighting match",
+      status: brightnessGap < 55 && temperatureGap < 32 ? "Good" : "Weak",
+      note: brightnessGap < 55 && temperatureGap < 32 ? "" : "Lighting differs strongly; the result may look pasted."
+    },
+    {
+      label: "Garment clarity",
+      status: garment.clarity > 7 ? "Good" : "Weak",
+      note: garment.clarity > 7 ? "" : "Flat, blurry, or low-contrast garment images reduce realism."
+    }
+  ];
+}
+
+async function normalizeForGeneration(image, role) {
+  if (!elements.normalizeToggle.checked || !image?.analysis) {
+    return image.dataUrl;
+  }
+
+  const source = await loadImage(image.dataUrl);
+  const canvas = document.createElement("canvas");
+  canvas.width = source.width;
+  canvas.height = source.height;
+  const ctx = canvas.getContext("2d");
+  const targetBrightness = role === "garment" && state.person?.analysis ? state.person.analysis.brightness : 145;
+  const delta = Math.max(-24, Math.min(24, targetBrightness - image.analysis.brightness));
+  ctx.filter = `brightness(${Math.max(0.82, Math.min(1.18, 1 + delta / 180))}) contrast(1.03)`;
+  ctx.drawImage(source, 0, 0);
+  return canvas.toDataURL("image/jpeg", 0.88);
+}
+
 function getMode() {
   return document.querySelector("input[name='mode']:checked").value;
+}
+
+function getGarmentSource() {
+  return document.querySelector("input[name='garmentSource']:checked").value;
+}
+
+function getItemType() {
+  return elements.itemTypeSelect.value;
 }
 
 async function generateResults() {
@@ -309,6 +426,11 @@ async function remoteTryOn(providerId) {
     throw new Error("API key missing");
   }
 
+  const [personImage, garmentImage] = await Promise.all([
+    normalizeForGeneration(state.person, "person"),
+    normalizeForGeneration(state.garment, "garment")
+  ]);
+
   const response = await fetch("/api/tryon", {
     method: "POST",
     headers: {
@@ -317,10 +439,13 @@ async function remoteTryOn(providerId) {
     body: JSON.stringify({
       providerId,
       mode: getMode(),
+      itemType: getItemType(),
+      garmentSource: getGarmentSource(),
+      autoNormalize: elements.normalizeToggle.checked,
       remoteEnabled: state.remoteEnabled,
       consentAccepted: state.consentAccepted,
-      personImage: state.person.dataUrl,
-      garmentImage: state.garment.dataUrl
+      personImage,
+      garmentImage
     })
   });
 
@@ -338,8 +463,9 @@ async function remoteTryOn(providerId) {
 
 function mockTryOn(providerId, mode) {
   const delay = {
+    opensource: 1400,
     fashn: 1600,
-    idm: 2300,
+    replicate: 2300,
     openai: 2900
   }[providerId];
 
@@ -615,6 +741,7 @@ function resetRun() {
   [elements.personDropzone, elements.garmentDropzone].forEach((dropzone) => dropzone.classList.remove("has-image"));
   elements.formError.textContent = "";
   elements.saveButton.disabled = true;
+  renderQualityPanel();
   renderResults();
 }
 

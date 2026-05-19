@@ -54,12 +54,44 @@
           </div>
 
           <div class="control-block">
-            <span class="control-title">MODE</span>
-            <div class="segment" role="radiogroup" aria-label="生成模式">
-              <label><input type="radio" name="mode" value="real" checked />Real</label>
-              <label><input type="radio" name="mode" value="soft" />Soft</label>
-              <label><input type="radio" name="mode" value="editorial" />Editorial</label>
+            <span class="control-title">STUDY INTENT</span>
+            <div class="segment" role="radiogroup" aria-label="生成意图">
+              <label><input type="radio" name="mode" value="fit" checked />Fit Check</label>
+              <label><input type="radio" name="mode" value="styled" />Styled Look</label>
             </div>
+          </div>
+
+          <div class="control-block">
+            <span class="control-title">ITEM TYPE</span>
+            <select class="select-control" id="itemTypeSelect">
+              <option value="top">Top</option>
+              <option value="outerwear">Outerwear</option>
+              <option value="dress">Dress</option>
+              <option value="skirt">Skirt</option>
+              <option value="pants">Pants</option>
+              <option value="shoes">Shoes</option>
+              <option value="bag">Bag</option>
+              <option value="hat">Hat</option>
+            </select>
+          </div>
+
+          <div class="control-block">
+            <span class="control-title">GARMENT SOURCE</span>
+            <div class="segment" role="radiogroup" aria-label="衣服图片来源">
+              <label><input type="radio" name="garmentSource" value="flat-lay" checked />Flat-lay</label>
+              <label><input type="radio" name="garmentSource" value="model" />On model</label>
+            </div>
+          </div>
+
+          <div class="control-block">
+            <span class="control-title">INPUT CHECK</span>
+            <div class="quality-panel" id="qualityPanel">
+              <p>Upload both images to check lighting and clarity.</p>
+            </div>
+            <label class="consent-row normalize-row">
+              <input id="normalizeToggle" type="checkbox" checked />
+              <span>Auto normalize brightness before generation.</span>
+            </label>
           </div>
 
           <div class="remote-panel">
