@@ -4,6 +4,7 @@
   "private": true,
   "description": "A private web lab for comparing AI virtual try-on results.",
   "scripts": {
-    "dev": "node server.js"
+    "dev": "node backend/server.js",
+    "check": "node --check backend/server.js && node --check backend/providers.js && node --check backend/config.js && node --check frontend/src/app.js"
   }
 }

@@ -5,7 +5,7 @@ const providers = [
     description: "Primary try-on model"
   },
   {
-    id: "idm",
+    id: "replicate",
     name: "IDM-VTON",
     description: "Benchmark model"
   },
@@ -21,7 +21,16 @@ const state = {
   garment: null,
   selectedProviders: new Set(providers.map((provider) => provider.id)),
   results: [],
-  isGenerating: false
+  isGenerating: false,
+  remoteEnabled: false,
+  consentAccepted: false,
+  config: {
+    keys: {
+      fashn: false,
+      replicate: false,
+      openai: false
+    }
+  }
 };
 
 const elements = {
@@ -34,40 +43,71 @@ const elements = {
   personError: document.querySelector("#personError"),
   garmentError: document.querySelector("#garmentError"),
   providerGroup: document.querySelector("#providerGroup"),
-  themeSwitcher: document.querySelector("#themeSwitcher"),
+  navStatus: document.querySelector("#navStatus"),
+  privacyNote: document.querySelector("#privacyNote"),
+  remoteToggle: document.querySelector("#remoteToggle"),
+  remoteCopy: document.querySelector("#remoteCopy"),
+  consentCheckbox: document.querySelector("#consentCheckbox"),
+  keyStatus: document.querySelector("#keyStatus"),
   formError: document.querySelector("#formError"),
   generateButton: document.querySelector("#generateButton"),
   resetButton: document.querySelector("#resetButton"),
   saveButton: document.querySelector("#saveButton"),
   clearSavedButton: document.querySelector("#clearSavedButton"),
-  emptyState: document.querySelector("#emptyState"),
+  caseSection: document.querySelector("#caseSection"),
+  resultsSection: document.querySelector("#resultsSection"),
   resultGrid: document.querySelector("#resultGrid"),
   savedList: document.querySelector("#savedList"),
   toast: document.querySelector("#toast")
 };
 
-function init() {
+async function init() {
+  await loadConfig();
   renderProviders();
   bindUpload(elements.personInput, "person");
   bindUpload(elements.garmentInput, "garment");
   bindDropzone(elements.personDropzone, "person");
   bindDropzone(elements.garmentDropzone, "garment");
-  bindThemeSwitcher();
+  bindRemoteControls();
   elements.generateButton.addEventListener("click", generateResults);
   elements.resetButton.addEventListener("click", resetRun);
   elements.saveButton.addEventListener("click", saveRun);
   elements.clearSavedButton.addEventListener("click", clearSavedRuns);
+  renderRemoteState();
   renderSavedRuns();
 }
 
-function bindThemeSwitcher() {
-  elements.themeSwitcher.querySelectorAll("[data-theme]").forEach((button) => {
-    button.addEventListener("click", () => {
-      document.body.dataset.theme = button.dataset.theme;
-      elements.themeSwitcher.querySelectorAll("[data-theme]").forEach((item) => {
-        item.classList.toggle("active", item === button);
-      });
-    });
+async function loadConfig() {
+  try {
+    const response = await fetch("/api/config");
+    if (!response.ok) {
+      throw new Error("Config unavailable");
+    }
+    state.config = await response.json();
+  } catch {
+    state.config = {
+      keys: {
+        fashn: false,
+        replicate: false,
+        openai: false
+      }
+    };
+  }
+}
+
+function bindRemoteControls() {
+  elements.remoteToggle.addEventListener("change", () => {
+    state.remoteEnabled = elements.remoteToggle.checked;
+    if (!state.remoteEnabled) {
+      state.consentAccepted = false;
+      elements.consentCheckbox.checked = false;
+    }
+    renderRemoteState();
+  });
+
+  elements.consentCheckbox.addEventListener("change", () => {
+    state.consentAccepted = elements.consentCheckbox.checked;
+    renderRemoteState();
   });
 }
 
@@ -92,6 +132,23 @@ function renderProviders() {
       }
     });
   });
+}
+
+function renderRemoteState() {
+  elements.navStatus.textContent = state.remoteEnabled ? "REMOTE TEST" : "LOCAL MODE";
+  elements.privacyNote.textContent = state.remoteEnabled
+    ? "Remote test mode is on. Selected images will be uploaded only after consent and Generate Study."
+    : "Local mode is active. Images stay in this browser unless remote test mode is enabled.";
+  elements.remoteCopy.textContent = state.remoteEnabled
+    ? "On: selected non-private images can be uploaded to enabled providers."
+    : "Off: local mock only. No uploads.";
+  elements.consentCheckbox.disabled = !state.remoteEnabled;
+  elements.keyStatus.innerHTML = providers
+    .map((provider) => {
+      const ready = Boolean(state.config.keys?.[provider.id]);
+      return `<span class="${ready ? "key-ready" : "key-missing"}">${provider.name}: ${ready ? "configured" : "missing"}</span>`;
+    })
+    .join("");
 }
 
 function bindUpload(input, type) {
@@ -176,6 +233,11 @@ async function generateResults() {
     return;
   }
 
+  if (state.remoteEnabled && !state.consentAccepted) {
+    elements.formError.textContent = "Confirm that you are using non-private test images.";
+    return;
+  }
+
   state.isGenerating = true;
   state.results = providers
     .filter((provider) => state.selectedProviders.has(provider.id))
@@ -209,7 +271,7 @@ async function generateResults() {
 async function runProvider(result) {
   renderResults();
   try {
-    const imageUrl = await mockTryOn(result.provider.id, getMode());
+    const imageUrl = state.remoteEnabled ? await remoteTryOn(result.provider.id) : await mockTryOn(result.provider.id, getMode());
     result.status = "success";
     result.imageUrl = imageUrl;
   } catch (error) {
@@ -217,6 +279,38 @@ async function runProvider(result) {
     result.error = error.message || "Generation failed";
   }
   renderResults();
+}
+
+async function remoteTryOn(providerId) {
+  if (!state.config.keys?.[providerId]) {
+    throw new Error("API key missing");
+  }
+
+  const response = await fetch("/api/tryon", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      providerId,
+      mode: getMode(),
+      remoteEnabled: state.remoteEnabled,
+      consentAccepted: state.consentAccepted,
+      personImage: state.person.dataUrl,
+      garmentImage: state.garment.dataUrl
+    })
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || "Remote generation failed");
+  }
+
+  if (!data.imageUrl) {
+    throw new Error("Remote provider returned no image");
+  }
+
+  return data.imageUrl;
 }
 
 function mockTryOn(providerId, mode) {
@@ -244,7 +338,7 @@ async function createMockResultImage(providerId, mode) {
   const ctx = canvas.getContext("2d");
   const palette = {
     fashn: ["#f7f2ea", "#365b52"],
-    idm: ["#eef2ef", "#4f5f76"],
+    replicate: ["#eef2ef", "#4f5f76"],
     openai: ["#f5ece8", "#8a5149"]
   }[providerId];
 
@@ -313,7 +407,8 @@ function modeLabel(mode) {
 
 function renderResults() {
   const hasResults = state.results.length > 0;
-  elements.emptyState.hidden = hasResults;
+  elements.caseSection.hidden = hasResults;
+  elements.resultsSection.hidden = !hasResults;
   elements.resultGrid.hidden = !hasResults;
 
   if (!hasResults) {

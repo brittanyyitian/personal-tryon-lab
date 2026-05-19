@@ -8,22 +8,18 @@
   </head>
   <body data-theme="minimal">
     <main class="shell">
-      <nav class="studio-nav" aria-label="视觉风格">
+      <nav class="studio-nav" aria-label="Studio status">
         <span>TRY-ON LAB</span>
-        <div class="theme-switcher" id="themeSwitcher" role="group" aria-label="切换页面风格">
-          <button class="theme-button active" type="button" data-theme="minimal">A Minimal</button>
-          <button class="theme-button" type="button" data-theme="dark">B Dark</button>
-          <button class="theme-button" type="button" data-theme="editorial">C Editorial</button>
-        </div>
-        <span>LOCAL ONLY</span>
+        <span>MINIMAL STUDY</span>
+        <span id="navStatus">LOCAL MODE</span>
       </nav>
 
       <header class="topbar">
         <div>
           <p class="eyebrow">PRIVATE FITTING STUDY</p>
           <h1>Personal<br />Fitting<br />Study</h1>
-          <p class="subtitle">A quiet local studio for comparing virtual try-on outputs.</p>
-          <p class="privacy-note">本版本仅在本机浏览器处理图片，不调用远端 API，不上传图片。</p>
+          <p class="subtitle">A quiet studio for Level 2 virtual try-on tests with non-private images.</p>
+          <p class="privacy-note" id="privacyNote">Local mode is active. Images stay in this browser unless remote test mode is enabled.</p>
         </div>
         <button class="icon-button" id="resetButton" type="button" aria-label="重置本次测试" title="重置本次测试">
           ↻
@@ -66,6 +62,22 @@
             </div>
           </div>
 
+          <div class="remote-panel">
+            <div class="remote-header">
+              <span class="control-title">REMOTE TEST</span>
+              <label class="switch">
+                <input id="remoteToggle" type="checkbox" />
+                <span>On</span>
+              </label>
+            </div>
+            <p class="remote-copy" id="remoteCopy">Off: local mock only. No uploads.</p>
+            <div class="key-status" id="keyStatus"></div>
+            <label class="consent-row">
+              <input id="consentCheckbox" type="checkbox" disabled />
+              <span>I am using non-private test images and understand they will be uploaded.</span>
+            </label>
+          </div>
+
           <div class="action-row">
             <p class="inline-error" id="formError"></p>
             <button class="primary-button" id="generateButton" type="button">Generate Study</button>
@@ -73,18 +85,21 @@
         </div>
       </section>
 
-      <section class="results-section" aria-label="生成结果">
+      <section class="case-section" id="caseSection" aria-label="Case study">
+        <div>
+          <p class="eyebrow">CASE STUDY</p>
+          <h2>Awaiting First Study</h2>
+        </div>
+        <p>Upload non-private test images, then run a local mock or remote API study. Output cards and scoring appear only after the first generation.</p>
+      </section>
+
+      <section class="results-section" id="resultsSection" aria-label="生成结果" hidden>
         <div class="section-heading">
           <div>
             <p class="eyebrow">MODEL COMPARISON</p>
             <h2>Study Output</h2>
           </div>
           <button class="secondary-button" id="saveButton" type="button" disabled>Save Study</button>
-        </div>
-
-        <div class="empty-state" id="emptyState">
-          <p>No study yet.</p>
-          <span>Add a person image and a garment to begin.</span>
         </div>
 
         <div class="result-grid" id="resultGrid" hidden></div>
