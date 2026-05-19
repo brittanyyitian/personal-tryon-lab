@@ -608,7 +608,7 @@ function renderMoodBoard() {
           <svg viewBox="0 0 240 520" aria-hidden="true">
             <path d="M120 36 C138 36 150 50 150 70 C150 92 138 108 120 108 C102 108 90 92 90 70 C90 50 102 36 120 36 M98 132 C108 122 132 122 142 132 C160 150 166 184 166 228 C166 258 162 292 156 340 C152 376 150 420 150 468 M142 132 C132 144 128 170 128 216 C128 264 128 356 128 480 M98 132 C108 144 112 170 112 216 C112 264 112 356 112 480 M98 132 C80 150 74 184 74 228 C74 258 78 292 84 340 C88 376 90 420 90 468 M90 468 C90 486 98 494 110 494 M150 468 C150 486 142 494 130 494"></path>
           </svg>
-          <strong>DROP A PERSON<br />AND OUTFIT PIECES</strong>
+          <strong>Drop a person<br />and outfit pieces</strong>
           <small>JPG, PNG · Up to 20MB</small>
           <span class="upload-arrow" aria-hidden="true">
             <svg viewBox="0 0 80 80">
