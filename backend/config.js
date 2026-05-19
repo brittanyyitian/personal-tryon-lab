@@ -30,6 +30,7 @@ function loadEnv() {
 
 function keyStatus() {
   return {
+    opensource: Boolean(process.env.HF_VTON_SPACE || "ashamsundar/Try-On"),
     fashn: Boolean(process.env.FASHN_API_KEY),
     replicate: Boolean(process.env.REPLICATE_API_TOKEN),
     openai: Boolean(process.env.OPENAI_API_KEY)

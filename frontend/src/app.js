@@ -1,5 +1,10 @@
 const providers = [
   {
+    id: "opensource",
+    name: "OPEN SOURCE VTON",
+    description: "Free Hugging Face / Gradio open-source try-on"
+  },
+  {
     id: "fashn",
     name: "FASHN",
     description: "Primary try-on model"
@@ -26,6 +31,7 @@ const state = {
   consentAccepted: false,
   config: {
     keys: {
+      opensource: false,
       fashn: false,
       replicate: false,
       openai: false
@@ -354,6 +360,7 @@ async function createMockResultImage(providerId, mode) {
   canvas.height = 1200;
   const ctx = canvas.getContext("2d");
   const palette = {
+    opensource: ["#f2f2ef", "#111111"],
     fashn: ["#f7f2ea", "#365b52"],
     replicate: ["#eef2ef", "#4f5f76"],
     openai: ["#f5ece8", "#8a5149"]

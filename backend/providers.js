@@ -1,4 +1,8 @@
 const PROVIDERS = {
+  opensource: {
+    label: "OPEN SOURCE VTON",
+    requiredKey: null
+  },
   fashn: {
     label: "FASHN",
     requiredKey: "FASHN_API_KEY"
@@ -32,6 +36,10 @@ function assertRemoteConsent({ remoteEnabled, consentAccepted }) {
 }
 
 function assertApiKey(provider) {
+  if (!provider.requiredKey) {
+    return "";
+  }
+
   const key = process.env[provider.requiredKey];
   if (!key) {
     const error = new Error(`${provider.requiredKey} is missing in .env`);
@@ -58,9 +66,14 @@ function assertImageData(value, label) {
 async function runProvider(providerId, payload) {
   const provider = assertProvider(providerId);
   assertRemoteConsent(payload);
-  const apiKey = assertApiKey(provider);
   assertImageData(payload.personImage, "personImage");
   assertImageData(payload.garmentImage, "garmentImage");
+
+  if (providerId === "opensource") {
+    return runOpenSourceVton(payload);
+  }
+
+  const apiKey = assertApiKey(provider);
 
   if (providerId === "fashn") {
     return runFashn(apiKey, payload);
@@ -199,6 +212,62 @@ async function runOpenAI(apiKey, payload) {
   return providerResult("openai", extractImageUrl(data), data);
 }
 
+async function runOpenSourceVton(payload) {
+  const { Client, handle_file } = await import("@gradio/client");
+  const fs = require("node:fs");
+  const os = require("node:os");
+  const path = require("node:path");
+
+  const space = process.env.HF_VTON_SPACE || "ashamsundar/Try-On";
+  const apiName = process.env.HF_VTON_API_NAME || "/try_on_cloth";
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "tryon-hf-"));
+  const personPath = path.join(tempDir, "person.png");
+  const garmentPath = path.join(tempDir, "garment.png");
+
+  try {
+    writeDataUrl(payload.personImage, personPath);
+    writeDataUrl(payload.garmentImage, garmentPath);
+
+    const client = await Client.connect(space, {
+      hf_token: process.env.HF_TOKEN || undefined
+    });
+
+    const result = await client.predict(apiName, openSourcePayload(apiName, {
+      personPath,
+      garmentPath,
+      handle_file,
+      mode: payload.mode
+    }));
+
+    return providerResult("opensource", extractImageUrl(result), result);
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
+function openSourcePayload(apiName, { personPath, garmentPath, handle_file, mode }) {
+  if (apiName === "/try_on_cloth") {
+    return {
+      human_image: handle_file(personPath),
+      cloth_image: handle_file(garmentPath)
+    };
+  }
+
+  return {
+    dict: {
+      background: handle_file(personPath),
+      layers: [],
+      composite: null
+    },
+    garm_img: handle_file(garmentPath),
+    garment_des: openSourceGarmentPrompt(mode),
+    is_checked: true,
+    is_checked_crop: false,
+    denoise_steps: 30,
+    seed: 42
+  };
+}
+
 async function readJsonResponse(response) {
   const text = await response.text();
   let data;
@@ -265,7 +334,28 @@ function extractImageUrl(data) {
     return extractImageUrl(data.output);
   }
 
+  if (data.path) {
+    return data.url || data.path;
+  }
+
   return "";
+}
+
+function writeDataUrl(dataUrl, filePath) {
+  const fs = require("node:fs");
+  const base64 = dataUrl.split(",")[1];
+  if (!base64) {
+    throw new Error("Invalid image data.");
+  }
+  fs.writeFileSync(filePath, Buffer.from(base64, "base64"));
+}
+
+function openSourceGarmentPrompt(mode) {
+  return {
+    real: "a realistic garment",
+    soft: "a clean stylish garment",
+    editorial: "a minimal fashion editorial garment"
+  }[mode] || "a realistic garment";
 }
 
 function fashnPrompt(mode) {
