@@ -1,0 +1,9 @@
+{
+  "name": "personal-tryon-lab",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A private web lab for comparing AI virtual try-on results.",
+  "scripts": {
+    "dev": "node server.js"
+  }
+}
