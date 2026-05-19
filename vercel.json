@@ -16,6 +16,10 @@
     {
       "source": "/app.js",
       "destination": "/frontend/src/app.js"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "/frontend/src/assets/:path*"
     }
   ]
 }

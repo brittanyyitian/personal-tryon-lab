@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 950" role="img" aria-label="Try-on empty board reference">
+  <defs>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#000000" flood-opacity="0.12"/>
+    </filter>
+    <filter id="fadeBlur">
+      <feGaussianBlur stdDeviation="0.5"/>
+    </filter>
+    <linearGradient id="clothGrey" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#86867d"/>
+      <stop offset="0.55" stop-color="#64645c"/>
+      <stop offset="1" stop-color="#4d4d47"/>
+    </linearGradient>
+    <linearGradient id="khaki" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9c9a8a"/>
+      <stop offset="0.55" stop-color="#777867"/>
+      <stop offset="1" stop-color="#5f6254"/>
+    </linearGradient>
+    <linearGradient id="shoe" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f2f1ec"/>
+      <stop offset="1" stop-color="#c8c8c2"/>
+    </linearGradient>
+    <radialGradient id="boardGlow" cx="50%" cy="48%" r="58%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.55" stop-color="#fbfaf8"/>
+      <stop offset="1" stop-color="#f5f3ef"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="0" y="0" width="1600" height="950" fill="url(#boardGlow)"/>
+  <rect x="48" y="34" width="1504" height="882" rx="28" fill="none" stroke="#d4d0c9" stroke-width="1.2" stroke-dasharray="7 7"/>
+
+  <!-- Hat -->
+  <g transform="translate(236 128) rotate(-4)" filter="url(#softShadow)" opacity="0.92">
+    <path d="M24 71 C32 24 86 4 142 20 C188 33 203 61 199 90 C151 73 85 72 24 71Z" fill="#69695f"/>
+    <path d="M29 72 C88 68 157 72 212 92 C190 105 142 100 102 93 C70 87 44 82 29 72Z" fill="#59594f"/>
+    <path d="M44 60 C81 49 140 51 181 66" fill="none" stroke="#858578" stroke-width="2" opacity="0.55"/>
+    <text x="112" y="55" fill="#e9e7df" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="700" text-anchor="middle" transform="rotate(-8 112 55)">REPRESENT</text>
+  </g>
+
+  <!-- Bag -->
+  <g transform="translate(206 350) rotate(-5)" filter="url(#softShadow)" opacity="0.9">
+    <path d="M48 86 C55 40 91 16 128 22 C166 28 191 59 196 103" fill="none" stroke="#4f5048" stroke-width="7" stroke-linecap="round"/>
+    <path d="M30 90 C61 73 155 71 205 91 L218 202 C175 225 74 224 28 202 Z" fill="#807f70"/>
+    <path d="M42 101 C82 111 159 111 203 100" fill="none" stroke="#5b5c53" stroke-width="2" opacity="0.55"/>
+    <path d="M74 134 H176" stroke="#626357" stroke-width="2" opacity="0.45"/>
+    <circle cx="191" cy="124" r="7" fill="none" stroke="#e1ded4" stroke-width="2" opacity="0.5"/>
+  </g>
+
+  <!-- Shoe -->
+  <g transform="translate(228 720) rotate(-2)" filter="url(#softShadow)" opacity="0.9">
+    <path d="M32 92 C74 55 115 45 157 62 C186 74 224 86 274 90 C313 94 340 111 350 133 C260 145 154 143 47 134 C29 126 24 111 32 92Z" fill="url(#shoe)"/>
+    <path d="M74 82 C100 95 138 103 182 104 C222 105 255 114 286 132" fill="none" stroke="#aaa9a3" stroke-width="4"/>
+    <path d="M96 74 L125 103 M124 69 L154 104 M154 70 L183 106" stroke="#b9b8b2" stroke-width="3"/>
+    <path d="M52 124 C138 136 245 138 338 126" fill="none" stroke="#9f9e99" stroke-width="5"/>
+  </g>
+
+  <!-- Shirt -->
+  <g transform="translate(1110 126) rotate(7)" filter="url(#softShadow)" opacity="0.92">
+    <path d="M64 24 L108 8 H168 L212 24 L274 66 L242 132 L216 118 V264 H58 V118 L32 132 L0 66Z" fill="url(#clothGrey)"/>
+    <path d="M108 8 C118 36 158 36 168 8" fill="none" stroke="#b0aa9e" stroke-width="5" opacity="0.45"/>
+    <text x="137" y="92" fill="#cfc8ba" font-family="Georgia, serif" font-size="28" text-anchor="middle" opacity="0.78">JOY DIVISION</text>
+    <rect x="91" y="115" width="92" height="72" rx="4" fill="#c9c1b1" opacity="0.28"/>
+    <path d="M88 232 C122 247 174 249 220 232" fill="none" stroke="#363631" stroke-width="4" opacity="0.35"/>
+    <path d="M52 66 C90 83 195 84 236 66" fill="none" stroke="#a8a397" stroke-width="2" opacity="0.35"/>
+  </g>
+
+  <!-- Cargo pants -->
+  <g transform="translate(1082 500) rotate(7)" filter="url(#softShadow)" opacity="0.9">
+    <path d="M60 18 H206 L229 402 H147 L132 165 L113 402 H32 Z" fill="url(#khaki)"/>
+    <path d="M80 42 H185" stroke="#55584c" stroke-width="3" opacity="0.45"/>
+    <path d="M58 166 H116 V230 H45 Z M153 168 H216 V233 H163 Z" fill="#777968" stroke="#545648" stroke-width="2" opacity="0.7"/>
+    <path d="M43 278 H104 V338 H30 Z M169 276 H230 V336 H180 Z" fill="#6d705f" stroke="#525447" stroke-width="2" opacity="0.55"/>
+    <path d="M103 70 C121 144 118 270 113 390 M145 70 C137 148 139 272 147 390" fill="none" stroke="#56584d" stroke-width="3" opacity="0.45"/>
+  </g>
+
+  <!-- Person outline -->
+  <g transform="translate(650 82)" opacity="0.55" filter="url(#fadeBlur)">
+    <path d="M150 24 C176 24 194 44 194 75 C194 107 176 130 150 130 C124 130 106 107 106 75 C106 44 124 24 150 24
+      M117 164 C132 149 168 149 183 164 C211 190 221 238 221 303 C221 348 215 398 207 469 C201 522 198 586 198 658
+      M183 164 C168 181 162 220 162 288 C162 360 162 494 162 674
+      M117 164 C132 181 138 220 138 288 C138 360 138 494 138 674
+      M117 164 C89 190 79 238 79 303 C79 348 85 398 93 469 C99 522 102 586 102 658
+      M102 658 C102 684 114 697 132 697
+      M198 658 C198 684 186 697 168 697"
+      fill="none" stroke="#c8c4bd" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 7"/>
+  </g>
+
+  <g font-family="Helvetica Neue, Helvetica, Arial, sans-serif" text-anchor="middle">
+    <text x="800" y="398" fill="#101010" font-size="32" font-weight="400">Drop a person</text>
+    <text x="800" y="438" fill="#101010" font-size="32" font-weight="400">and outfit pieces</text>
+    <text x="800" y="482" fill="#888984" font-size="18">JPG, PNG · Up to 20MB</text>
+    <path d="M782 565 C812 555 824 520 810 500" fill="none" stroke="#111111" stroke-width="1.4"/>
+    <path d="M802 510 L810 500 L820 508" fill="none" stroke="#111111" stroke-width="1.4"/>
+  </g>
+</svg>
