@@ -499,14 +499,7 @@ function renderMoodBoard() {
   if (!hasImages) {
     elements.moodBoard.innerHTML = `
       <div class="board-masthead">
-        <span>Personal base styling</span>
-        <strong>Scene 01</strong>
-      </div>
-      <div class="mood-empty">
-        <span>01</span>
-        <strong>Upload a person</strong>
-        <span>02</span>
-        <strong>Add outfit pieces</strong>
+        <strong>Upload a person and items</strong>
       </div>
     `;
     return;
@@ -533,22 +526,12 @@ function renderMoodBoard() {
     `)
     .join("");
 
-  const formula = state.items
-    .slice(0, 4)
-    .map((item, index) => `<span>${String(index + 1).padStart(2, "0")} ${labelForItem(item.itemType)}</span>`)
-    .join("<b>+</b>");
-
   elements.moodBoard.innerHTML = `
     <div class="board-masthead">
-      <span>Personal base styling</span>
-      <strong>Scene ${String(Math.max(1, state.persons.findIndex((person) => person.id === activePerson?.id) + 1)).padStart(2, "0")}</strong>
-    </div>
-    <div class="board-copy">
-      <p>AI reads the pieces first. Click any cutout to choose the next try-on.</p>
+      <strong>${activePerson ? "Selected person" : "Upload a person"}</strong>
     </div>
     ${personMarkup}
     <div class="paper-item-layer">${itemMarkup}</div>
-    <div class="look-formula">${formula || "<span>Add items</span>"}</div>
   `;
 
   elements.moodBoard.querySelectorAll("[data-item-id]").forEach((button) => {
@@ -669,11 +652,9 @@ function renderAutoSummary() {
   const hasBoth = Boolean(activePerson && activeItem);
 
   if (!hasBoth) {
-    elements.autoTitle.textContent = "Start with images";
+    elements.autoTitle.textContent = "Add images";
     elements.autoSummary.innerHTML = `
-      <div class="summary-line"><span>People</span><strong>${state.persons.length || "Add"}</strong></div>
-      <div class="summary-line"><span>Items</span><strong>${state.items.length || "Add"}</strong></div>
-      <p>Batch upload is supported. Click any card on the board to choose the active pairing.</p>
+      <p>${state.persons.length ? "Person selected." : "Upload a person."} ${state.items.length ? "Items identified." : "Upload one or more items."}</p>
     `;
     return;
   }
@@ -681,11 +662,7 @@ function renderAutoSummary() {
   const warnings = buildQualityChecks().filter((check) => check.status !== "Good").map((check) => check.label);
   elements.autoTitle.textContent = activeItem.aiLabel;
   elements.autoSummary.innerHTML = `
-    <div class="summary-line"><span>Person</span><strong>${state.persons.findIndex((person) => person.id === activePerson.id) + 1} of ${state.persons.length}</strong></div>
-    <div class="summary-line"><span>Item</span><strong>${state.items.findIndex((item) => item.id === activeItem.id) + 1} of ${state.items.length}</strong></div>
-    <div class="summary-line"><span>AI sees</span><strong>${activeItem.aiLabel}</strong></div>
-    <div class="summary-line"><span>Input</span><strong>${warnings.length ? `${warnings.length} warning${warnings.length > 1 ? "s" : ""}` : "Good"}</strong></div>
-    ${warnings.length ? `<p>${warnings.slice(0, 2).join(" / ")}. You can still generate.</p>` : "<p>Ready. Generate uses only this person and this item.</p>"}
+    <p>${warnings.length ? `${warnings.slice(0, 2).join(" / ")}.` : "Ready to generate with the selected cutout."}</p>
   `;
 }
 
