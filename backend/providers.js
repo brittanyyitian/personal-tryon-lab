@@ -260,7 +260,7 @@ function openSourcePayload(apiName, { personPath, garmentPath, handle_file, mode
       person_image: handle_file(personPath),
       garment_image: handle_file(garmentPath),
       category: "tops",
-      garment_photo_type: "auto",
+      garment_photo_type: "flat-lay",
       num_timesteps: mode === "real" ? 30 : 40,
       guidance_scale: mode === "editorial" ? 3 : 2.5,
       seed: 42,
