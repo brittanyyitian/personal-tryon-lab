@@ -10,15 +10,15 @@
     <main class="shell">
       <nav class="studio-nav" aria-label="Studio status">
         <span>TRY-ON LAB</span>
-        <span>MINIMAL STUDY</span>
+        <span>MOOD JOURNEY</span>
         <span id="navStatus">LOCAL MODE</span>
       </nav>
 
       <header class="topbar">
         <div>
           <p class="eyebrow">PRIVATE FITTING STUDY</p>
-          <h1>Personal<br />Fitting<br />Study</h1>
-          <p class="subtitle">A quiet studio for Level 2 virtual try-on tests with non-private images.</p>
+          <h1>Try-on<br />study</h1>
+          <p class="subtitle">Upload a person and outfit pieces. The board is only for checking what was uploaded; Generate creates the try-on result.</p>
           <p class="privacy-note" id="privacyNote">Local mode is active. Images stay in this browser unless remote test mode is enabled.</p>
         </div>
         <button class="icon-button" id="resetButton" type="button" aria-label="重置本次测试" title="重置本次测试">
@@ -26,47 +26,62 @@
         </button>
       </header>
 
-      <section class="workspace" aria-label="试穿输入">
-        <div class="upload-grid">
-          <label class="dropzone" id="personDropzone">
-            <input id="personInput" type="file" accept="image/png,image/jpeg,image/webp" />
+      <section class="upload-dock" aria-label="上传入口">
+        <div class="people-panel">
+          <label class="dropzone compact-dropzone" id="personDropzone">
+            <input id="personInput" type="file" accept="image/png,image/jpeg,image/webp" multiple />
             <span class="dropzone-index">01</span>
-            <span class="dropzone-label">PERSON</span>
-            <span class="dropzone-copy">ADD FULL BODY IMAGE</span>
-            <span class="upload-meta" id="personMeta">No image selected</span>
+            <span class="dropzone-label">People</span>
+            <span class="dropzone-copy">Add fitting subjects</span>
+            <span class="upload-meta" id="personMeta">No people yet</span>
             <img id="personPreview" alt="" hidden />
             <span class="dropzone-error" id="personError"></span>
           </label>
+          <div class="person-strip" id="personStrip" aria-label="Uploaded people"></div>
+        </div>
 
-          <label class="dropzone" id="garmentDropzone">
-            <input id="garmentInput" type="file" accept="image/png,image/jpeg,image/webp" />
+        <div class="mood-board-panel upload-panel">
+          <label class="dropzone item-dropzone mood-dropzone" id="garmentDropzone">
+            <input id="garmentInput" type="file" accept="image/png,image/jpeg,image/webp" multiple />
             <span class="dropzone-index">02</span>
-            <span class="dropzone-label">GARMENT</span>
-            <span class="dropzone-copy">ADD PRODUCT IMAGE</span>
-            <span class="upload-meta" id="garmentMeta">No image selected</span>
+            <span class="dropzone-label">Items</span>
+            <span class="dropzone-copy">Add pieces for the board</span>
+            <span class="upload-meta" id="garmentMeta">No items yet</span>
             <img id="garmentPreview" alt="" hidden />
             <span class="dropzone-error" id="garmentError"></span>
           </label>
         </div>
+      </section>
 
-        <div class="control-panel">
+      <section class="workspace mood-workspace" aria-label="试穿输入">
+        <div class="mood-board-panel">
+          <div class="mood-board" id="moodBoard" aria-label="AI understood items"></div>
+        </div>
+        <div class="control-panel insight-panel">
           <div class="auto-card">
-            <p class="eyebrow">AUTO STUDY</p>
+            <p class="eyebrow">AI READ</p>
             <h2 id="autoTitle">Upload Images</h2>
             <div class="auto-summary" id="autoSummary">
-              Add a person image and an item image. Settings will be inferred automatically.
+              Add people and outfit pieces. The board will show what AI understood.
             </div>
+            <div class="item-shelf" id="itemShelf" aria-label="Uploaded items"></div>
           </div>
 
-          <details class="advanced-panel">
-            <summary>Advanced Settings</summary>
-            <div class="control-block">
-              <span class="control-title">MODEL</span>
-              <div class="pill-row" id="providerGroup" role="group" aria-label="模型选择"></div>
-            </div>
+          <button class="settings-button" id="settingsButton" type="button">Remote & correction</button>
+
+          <div class="advanced-panel" id="settingsPanel" hidden>
+            <div class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+              <div class="settings-header">
+                <div>
+                  <p class="eyebrow">Settings</p>
+                  <h2 id="settingsTitle">Remote & correction</h2>
+                </div>
+                <button class="icon-button" id="settingsCloseButton" type="button" aria-label="关闭设置" title="关闭设置">×</button>
+              </div>
+            <div class="pill-row visually-muted" id="providerGroup" role="group" aria-label="模型选择"></div>
 
             <div class="control-block">
-              <span class="control-title">STUDY INTENT</span>
+              <span class="control-title">Intent</span>
               <div class="segment" role="radiogroup" aria-label="生成意图">
                 <label><input type="radio" name="mode" value="fit" checked />Fit Check</label>
                 <label><input type="radio" name="mode" value="styled" />Styled Look</label>
@@ -74,7 +89,7 @@
             </div>
 
             <div class="control-block">
-              <span class="control-title">ITEM TYPE</span>
+              <span class="control-title">Correct active item</span>
               <select class="select-control" id="itemTypeSelect">
                 <option value="top">Top</option>
                 <option value="outerwear">Outerwear</option>
@@ -96,9 +111,9 @@
             </div>
 
             <div class="control-block">
-              <span class="control-title">INPUT CHECK</span>
+              <span class="control-title">Input check</span>
               <div class="quality-panel" id="qualityPanel">
-                <p>Upload both images to check lighting and clarity.</p>
+                <p>Upload a person and an item to check image clarity.</p>
               </div>
               <label class="consent-row normalize-row">
                 <input id="normalizeToggle" type="checkbox" checked />
@@ -121,28 +136,29 @@
               <span>I am using non-private test images and understand they will be uploaded.</span>
             </label>
             </div>
-          </details>
+            </div>
+          </div>
 
           <div class="action-row">
             <p class="inline-error" id="formError"></p>
-            <button class="primary-button" id="generateButton" type="button">Generate Study</button>
+            <button class="primary-button" id="generateButton" type="button">Generate real try-on</button>
           </div>
         </div>
       </section>
 
       <section class="case-section" id="caseSection" aria-label="Case study">
         <div>
-          <p class="eyebrow">CASE STUDY</p>
-          <h2>Awaiting First Study</h2>
+          <p class="eyebrow">FLOW</p>
+          <h2>Board first, try-on after</h2>
         </div>
-        <p>Upload non-private test images, then run a local mock or remote API study. Output cards and scoring appear only after the first generation.</p>
+        <p>The board only confirms the uploaded person and items. Real try-on starts only after remote consent, then the model returns the person wearing the selected piece.</p>
       </section>
 
       <section class="results-section" id="resultsSection" aria-label="生成结果" hidden>
         <div class="section-heading">
           <div>
-            <p class="eyebrow">MODEL COMPARISON</p>
-            <h2>Study Output</h2>
+            <p class="eyebrow">TRY-ON OUTPUT</p>
+            <h2>Generated Look</h2>
           </div>
           <button class="secondary-button" id="saveButton" type="button" disabled>Save Study</button>
         </div>

@@ -22,8 +22,10 @@ const providers = [
 ];
 
 const state = {
-  person: null,
-  garment: null,
+  persons: [],
+  activePersonId: "",
+  items: [],
+  activeItemId: "",
   selectedProviders: new Set(["opensource"]),
   results: [],
   isGenerating: false,
@@ -60,8 +62,14 @@ const elements = {
   autoTitle: document.querySelector("#autoTitle"),
   autoSummary: document.querySelector("#autoSummary"),
   itemTypeSelect: document.querySelector("#itemTypeSelect"),
+  itemShelf: document.querySelector("#itemShelf"),
+  personStrip: document.querySelector("#personStrip"),
+  moodBoard: document.querySelector("#moodBoard"),
   normalizeToggle: document.querySelector("#normalizeToggle"),
   qualityPanel: document.querySelector("#qualityPanel"),
+  settingsButton: document.querySelector("#settingsButton"),
+  settingsPanel: document.querySelector("#settingsPanel"),
+  settingsCloseButton: document.querySelector("#settingsCloseButton"),
   formError: document.querySelector("#formError"),
   generateButton: document.querySelector("#generateButton"),
   resetButton: document.querySelector("#resetButton"),
@@ -82,17 +90,56 @@ async function init() {
   bindDropzone(elements.personDropzone, "person");
   bindDropzone(elements.garmentDropzone, "garment");
   bindRemoteControls();
+  bindSettingsModal();
   elements.generateButton.addEventListener("click", generateResults);
   elements.resetButton.addEventListener("click", resetRun);
   elements.saveButton.addEventListener("click", saveRun);
   elements.clearSavedButton.addEventListener("click", clearSavedRuns);
-  elements.itemTypeSelect.addEventListener("change", renderAutoSummary);
+  elements.itemTypeSelect.addEventListener("change", () => {
+    updateActiveItemFromControls();
+    renderAutoSummary();
+  });
   document.querySelectorAll("input[name='mode'], input[name='garmentSource']").forEach((input) => {
-    input.addEventListener("change", renderAutoSummary);
+    input.addEventListener("change", () => {
+      if (input.name === "garmentSource") {
+        updateActiveItemFromControls();
+      }
+      renderAutoSummary();
+    });
   });
   renderRemoteState();
+  renderPersonStrip();
+  renderItemShelf();
+  renderMoodBoard();
   renderAutoSummary();
   renderSavedRuns();
+}
+
+function bindSettingsModal() {
+  elements.settingsButton.addEventListener("click", openSettings);
+  elements.settingsCloseButton.addEventListener("click", closeSettings);
+  elements.settingsPanel.addEventListener("click", (event) => {
+    if (event.target === elements.settingsPanel) {
+      closeSettings();
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !elements.settingsPanel.hidden) {
+      closeSettings();
+    }
+  });
+}
+
+function openSettings() {
+  elements.settingsPanel.hidden = false;
+  document.body.classList.add("modal-open");
+  elements.settingsCloseButton.focus();
+}
+
+function closeSettings() {
+  elements.settingsPanel.hidden = true;
+  document.body.classList.remove("modal-open");
+  elements.settingsButton.focus();
 }
 
 async function loadConfig() {
@@ -105,6 +152,7 @@ async function loadConfig() {
   } catch {
     state.config = {
       keys: {
+        opensource: true,
         fashn: false,
         replicate: false,
         openai: false
@@ -121,6 +169,7 @@ function bindRemoteControls() {
       elements.consentCheckbox.checked = false;
     }
     renderRemoteState();
+    renderProviders();
   });
 
   elements.consentCheckbox.addEventListener("change", () => {
@@ -130,7 +179,9 @@ function bindRemoteControls() {
 }
 
 function renderProviders() {
-  elements.providerGroup.innerHTML = providers
+  const available = getAvailableProviders();
+  state.selectedProviders = new Set(chooseDefaultProviders(available).map((provider) => provider.id));
+  elements.providerGroup.innerHTML = available
     .map(
       (provider) => `
         <label title="${provider.description}">
@@ -148,6 +199,7 @@ function renderProviders() {
       } else {
         state.selectedProviders.delete(input.value);
       }
+      renderRemoteState();
     });
   });
 }
@@ -155,25 +207,41 @@ function renderProviders() {
 function renderRemoteState() {
   elements.navStatus.textContent = state.remoteEnabled ? "REMOTE TEST" : "LOCAL MODE";
   elements.privacyNote.textContent = state.remoteEnabled
-    ? "Remote test mode is on. Selected images will be uploaded only after consent and Generate Study."
-    : "Local mode is active. Images stay in this browser unless remote test mode is enabled.";
+    ? "Remote test mode is on. Selected images will be uploaded only after consent and Generate real try-on."
+    : "Local mode is active. Images stay in this browser; real try-on is disabled until remote consent is enabled.";
   elements.remoteCopy.textContent = state.remoteEnabled
     ? "On: selected non-private images can be uploaded to enabled providers."
     : "Off: local mock only. No uploads.";
   elements.consentCheckbox.disabled = !state.remoteEnabled;
-  elements.keyStatus.innerHTML = providers
-    .map((provider) => {
+  const selected = providers.filter((provider) => state.selectedProviders.has(provider.id));
+  elements.keyStatus.innerHTML = [
+    ...selected.map((provider) => {
       const ready = Boolean(state.config.keys?.[provider.id]);
-      return `<span class="${ready ? "key-ready" : "key-missing"}">${provider.name}: ${ready ? "configured" : "missing"}</span>`;
+      return `<span class="${ready ? "key-ready" : "key-missing"}">${provider.name}: ${ready ? "ready" : "local mock only"}</span>`;
     })
-    .join("");
+  ].join("");
+}
+
+function getAvailableProviders() {
+  return providers.filter((provider) => provider.id === "opensource" || state.config.keys?.[provider.id]);
+}
+
+function chooseDefaultProviders(available) {
+  const activeItem = getActiveItem();
+  if (state.remoteEnabled && ["shoes", "bag", "hat"].includes(activeItem?.itemType) && state.config.keys?.openai) {
+    return available.filter((provider) => provider.id === "openai");
+  }
+  const openSource = available.find((provider) => provider.id === "opensource");
+  return openSource ? [openSource] : available.slice(0, 1);
 }
 
 function bindUpload(input, type) {
   input.addEventListener("change", () => {
-    const file = input.files?.[0];
-    if (file) {
-      setImage(type, file);
+    const files = Array.from(input.files || []);
+    if (type === "garment") {
+      setItemImages(files);
+    } else {
+      setPersonImages(files);
     }
   });
 }
@@ -194,11 +262,25 @@ function bindDropzone(dropzone, type) {
   });
 
   dropzone.addEventListener("drop", (event) => {
-    const file = event.dataTransfer.files?.[0];
-    if (file) {
-      setImage(type, file);
+    const files = Array.from(event.dataTransfer.files || []);
+    if (type === "garment") {
+      setItemImages(files);
+    } else {
+      setPersonImages(files);
     }
   });
+}
+
+async function setPersonImages(files) {
+  for (const file of files) {
+    await setImage("person", file);
+  }
+}
+
+async function setItemImages(files) {
+  for (const file of files) {
+    await setImage("garment", file);
+  }
 }
 
 function setImage(type, file) {
@@ -210,35 +292,52 @@ function setImage(type, file) {
 
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
     errorElement.textContent = "Use jpg, png, or webp.";
-    return;
+    return Promise.resolve();
   }
 
   if (file.size > 18 * 1024 * 1024) {
     errorElement.textContent = "Image must be under 18MB.";
-    return;
+    return Promise.resolve();
   }
 
-  const reader = new FileReader();
-  reader.onload = async () => {
-    const dataUrl = await prepareImageDataUrl(reader.result);
-    const analysis = await analyzeImage(dataUrl);
-    const image = {
-      name: file.name,
-      size: file.size,
-      dataUrl,
-      analysis
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const dataUrl = await prepareImageDataUrl(reader.result);
+        const analysis = await analyzeImage(dataUrl);
+        const image = {
+          name: file.name,
+          size: file.size,
+          dataUrl,
+          analysis
+        };
+
+        if (type === "garment") {
+          const item = createItemFromImage(image);
+          state.items.push(item);
+          selectFitModeForNewItem();
+          setActiveItem(item.id);
+        } else {
+          const person = createPersonFromImage(image);
+          state.persons.push(person);
+          setActivePerson(person.id);
+        }
+
+        elements.formError.textContent = "";
+        renderQualityPanel();
+        renderAutoSummary();
+      } catch {
+        errorElement.textContent = "Could not read this image.";
+      }
+      resolve();
     };
-    state[type] = image;
-    previewElement.src = image.dataUrl;
-    previewElement.hidden = false;
-    dropzoneElement.classList.add("has-image");
-    renderUploadMeta(type, image);
-    inferSettingsFromUpload(type, image);
-    elements.formError.textContent = "";
-    renderQualityPanel();
-    renderAutoSummary();
-  };
-  reader.readAsDataURL(file);
+    reader.onerror = () => {
+      errorElement.textContent = "Could not read this image.";
+      resolve();
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function renderUploadMeta(type, image) {
@@ -247,20 +346,244 @@ function renderUploadMeta(type, image) {
   meta.textContent = `${image.name} · ${image.analysis.width}x${image.analysis.height} · ${megapixels}MP`;
 }
 
-function inferSettingsFromUpload(type, image) {
-  if (type !== "garment") {
+function createPersonFromImage(image) {
+  return {
+    ...image,
+    id: crypto.randomUUID(),
+    label: inferPersonLabel(image)
+  };
+}
+
+function createItemFromImage(image) {
+  const itemType = inferItemType(image.name);
+  const color = inferDominantColor(image.analysis);
+  const detail = inferItemDetail(image.name, itemType);
+  return {
+    ...image,
+    id: crypto.randomUUID(),
+    itemType,
+    color,
+    detail,
+    source: inferGarmentSource(image.name),
+    aiLabel: buildItemLabel(color, detail, itemType)
+  };
+}
+
+function getActivePerson() {
+  return state.persons.find((person) => person.id === state.activePersonId) || null;
+}
+
+function setActivePerson(personId) {
+  const person = state.persons.find((candidate) => candidate.id === personId);
+  if (!person) {
     return;
   }
 
-  const itemType = inferItemType(image.name);
-  elements.itemTypeSelect.value = itemType;
+  state.activePersonId = person.id;
+  elements.personPreview.src = person.dataUrl;
+  elements.personPreview.hidden = false;
+  elements.personDropzone.classList.add("has-image");
+  renderUploadMeta("person", person);
+  renderPersonStrip();
+  renderMoodBoard();
+}
 
-  const source = inferGarmentSource(image.name);
-  const sourceInput = document.querySelector(`input[name='garmentSource'][value='${source}']`);
+function renderPersonStrip() {
+  if (state.persons.length === 0) {
+    elements.personStrip.innerHTML = `<p class="empty-shelf">No people yet</p>`;
+    elements.personMeta.textContent = "No people yet";
+    return;
+  }
+
+  elements.personStrip.innerHTML = state.persons
+    .map((person, index) => `
+      <button class="person-card ${person.id === state.activePersonId ? "active" : ""}" data-person-id="${person.id}" type="button">
+        <img src="${person.dataUrl}" alt="" />
+        <span>${person.label || `Person ${index + 1}`}</span>
+      </button>
+    `)
+    .join("");
+
+  elements.personStrip.querySelectorAll("[data-person-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setActivePerson(button.dataset.personId);
+      renderQualityPanel();
+      renderAutoSummary();
+    });
+  });
+
+  const active = getActivePerson();
+  if (active) {
+    renderUploadMeta("person", active);
+  }
+}
+
+function getActiveItem() {
+  return state.items.find((item) => item.id === state.activeItemId) || null;
+}
+
+function setActiveItem(itemId) {
+  const item = state.items.find((candidate) => candidate.id === itemId);
+  if (!item) {
+    return;
+  }
+
+  state.activeItemId = item.id;
+  elements.garmentPreview.src = item.dataUrl;
+  elements.garmentPreview.hidden = false;
+  elements.garmentDropzone.classList.add("has-image");
+  renderUploadMeta("garment", item);
+  syncControlsFromItem(item);
+  renderProviders();
+  renderItemShelf();
+  renderMoodBoard();
+}
+
+function syncControlsFromItem(item) {
+  elements.itemTypeSelect.value = item.itemType;
+  const sourceInput = document.querySelector(`input[name='garmentSource'][value='${item.source}']`);
   if (sourceInput) {
     sourceInput.checked = true;
   }
+}
 
+function updateActiveItemFromControls() {
+  const item = getActiveItem();
+  if (!item) {
+    return;
+  }
+  item.itemType = elements.itemTypeSelect.value;
+  item.source = getGarmentSource();
+  item.aiLabel = buildItemLabel(item.color, item.detail, item.itemType);
+  renderItemShelf();
+  renderMoodBoard();
+}
+
+function renderItemShelf() {
+  if (state.items.length === 0) {
+    elements.itemShelf.innerHTML = `<p class="empty-shelf">No items yet</p>`;
+    elements.garmentMeta.textContent = "No items selected";
+    return;
+  }
+
+  elements.itemShelf.innerHTML = state.items
+    .map((item) => `
+      <button class="item-card ${item.id === state.activeItemId ? "active" : ""}" data-item-id="${item.id}" type="button">
+        <img src="${item.dataUrl}" alt="" />
+        <span>
+          <strong>${labelForItem(item.itemType)}</strong>
+          <small>${item.aiLabel}</small>
+        </span>
+      </button>
+    `)
+    .join("");
+
+  elements.itemShelf.querySelectorAll("[data-item-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setActiveItem(button.dataset.itemId);
+      renderQualityPanel();
+      renderAutoSummary();
+    });
+  });
+
+  const active = getActiveItem();
+  if (active) {
+    renderUploadMeta("garment", active);
+  }
+}
+
+function renderMoodBoard() {
+  const activePerson = getActivePerson();
+  const hasImages = activePerson || state.items.length > 0;
+  applyBoardPalette(activePerson, getActiveItem());
+  if (!hasImages) {
+    elements.moodBoard.innerHTML = `
+      <div class="board-masthead">
+        <span>Personal base styling</span>
+        <strong>Scene 01</strong>
+      </div>
+      <div class="mood-empty">
+        <span>01</span>
+        <strong>Upload a person</strong>
+        <span>02</span>
+        <strong>Add outfit pieces</strong>
+      </div>
+    `;
+    return;
+  }
+
+  const personMarkup = activePerson
+    ? `
+      <button class="paper-person" data-person-id="${activePerson.id}" type="button">
+        <span class="paper-cutout"></span>
+        <img src="${activePerson.dataUrl}" alt="" />
+        <span>${activePerson.label}</span>
+      </button>
+    `
+    : `<div class="paper-person placeholder">Add person</div>`;
+
+  const itemMarkup = state.items
+    .map((item, index) => `
+      <button class="paper-item paper-item-${(index % 5) + 1} ${item.id === state.activeItemId ? "active" : ""}" data-item-id="${item.id}" type="button">
+        <span class="item-number">${String(index + 1).padStart(2, "0")}</span>
+        <img src="${item.dataUrl}" alt="" />
+        <span class="pin-dot"></span>
+        <span class="paper-label">${item.aiLabel}</span>
+      </button>
+    `)
+    .join("");
+
+  const formula = state.items
+    .slice(0, 4)
+    .map((item, index) => `<span>${String(index + 1).padStart(2, "0")} ${labelForItem(item.itemType)}</span>`)
+    .join("<b>+</b>");
+
+  elements.moodBoard.innerHTML = `
+    <div class="board-masthead">
+      <span>Personal base styling</span>
+      <strong>Scene ${String(Math.max(1, state.persons.findIndex((person) => person.id === activePerson?.id) + 1)).padStart(2, "0")}</strong>
+    </div>
+    <div class="board-copy">
+      <p>AI reads the pieces first. Click any cutout to choose the next try-on.</p>
+    </div>
+    ${personMarkup}
+    <div class="paper-item-layer">${itemMarkup}</div>
+    <div class="look-formula">${formula || "<span>Add items</span>"}</div>
+  `;
+
+  elements.moodBoard.querySelectorAll("[data-item-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setActiveItem(button.dataset.itemId);
+      renderQualityPanel();
+      renderAutoSummary();
+    });
+  });
+
+  elements.moodBoard.querySelectorAll("[data-person-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setActivePerson(button.dataset.personId);
+      renderQualityPanel();
+      renderAutoSummary();
+    });
+  });
+}
+
+function applyBoardPalette(person, item) {
+  const base = person?.analysis || item?.analysis;
+  if (!base) {
+    elements.moodBoard.style.removeProperty("--board-bg");
+    elements.moodBoard.style.removeProperty("--board-line");
+    return;
+  }
+
+  const lightness = Math.max(88, Math.min(98, Math.round(100 - Math.abs(base.brightness - 148) / 8)));
+  const warmth = Math.max(-4, Math.min(4, Math.round(base.temperature / 20)));
+  const hue = warmth >= 0 ? 42 : 210;
+  elements.moodBoard.style.setProperty("--board-bg", `hsl(${hue} 8% ${lightness}%)`);
+  elements.moodBoard.style.setProperty("--board-line", `hsl(${hue} 5% ${Math.max(76, lightness - 13)}%)`);
+}
+
+function selectFitModeForNewItem() {
   const modeInput = document.querySelector(`input[name='mode'][value='fit']`);
   if (modeInput) {
     modeInput.checked = true;
@@ -288,25 +611,81 @@ function inferGarmentSource(fileName) {
   return ["model", "wear", "try", "模特", "上身", "穿"].some((word) => name.includes(word)) ? "model" : "flat-lay";
 }
 
+function inferPersonLabel(image) {
+  const portrait = image.analysis.height >= image.analysis.width * 1.18;
+  const clear = image.analysis.clarity > 7 ? "clear" : "soft";
+  return `${portrait ? "Full body" : "Person"} · ${clear}`;
+}
+
+function inferDominantColor(analysis) {
+  const brightness = analysis.brightness;
+  const temperature = analysis.temperature;
+  if (brightness < 62) {
+    return "black";
+  }
+  if (brightness > 205) {
+    return "white";
+  }
+  if (temperature > 18) {
+    return brightness > 138 ? "warm beige" : "brown";
+  }
+  if (temperature < -18) {
+    return brightness > 132 ? "pale blue" : "blue";
+  }
+  if (brightness < 112) {
+    return "charcoal";
+  }
+  return "neutral";
+}
+
+function inferItemDetail(fileName, itemType) {
+  const name = fileName.toLowerCase();
+  const detailRules = [
+    ["short", ["short", "cropped", "mini", "短"]],
+    ["long", ["long", "maxi", "长"]],
+    ["oversized", ["oversize", "oversized", "loose", "宽松"]],
+    ["structured", ["blazer", "tailored", "西装"]],
+    ["knit", ["knit", "sweater", "毛衣", "针织"]],
+    ["denim", ["denim", "jeans", "牛仔"]],
+    ["leather", ["leather", "皮"]]
+  ];
+  const detected = detailRules.find(([, words]) => words.some((word) => name.includes(word)))?.[0];
+  if (detected) {
+    return detected;
+  }
+  if (["bag", "shoes", "hat"].includes(itemType)) {
+    return "statement";
+  }
+  return "clean";
+}
+
+function buildItemLabel(color, detail, itemType) {
+  return `${color} ${detail} ${labelForItem(itemType).toLowerCase()}`;
+}
+
 function renderAutoSummary() {
-  const hasBoth = Boolean(state.person && state.garment);
-  const itemType = labelForItem(getItemType());
-  const source = getGarmentSource() === "model" ? "On model" : "Flat-lay";
-  const intent = getMode() === "styled" ? "Styled Look" : "Fit Check";
+  const activePerson = getActivePerson();
+  const activeItem = getActiveItem();
+  const hasBoth = Boolean(activePerson && activeItem);
 
   if (!hasBoth) {
-    elements.autoTitle.textContent = "Upload Images";
-    elements.autoSummary.innerHTML = "Add a person image and an item image. Settings will be inferred automatically.";
+    elements.autoTitle.textContent = "Start with images";
+    elements.autoSummary.innerHTML = `
+      <div class="summary-line"><span>People</span><strong>${state.persons.length || "Add"}</strong></div>
+      <div class="summary-line"><span>Items</span><strong>${state.items.length || "Add"}</strong></div>
+      <p>Batch upload is supported. Click any card on the board to choose the active pairing.</p>
+    `;
     return;
   }
 
   const warnings = buildQualityChecks().filter((check) => check.status !== "Good").map((check) => check.label);
-  elements.autoTitle.textContent = `${itemType} Study`;
+  elements.autoTitle.textContent = activeItem.aiLabel;
   elements.autoSummary.innerHTML = `
-    <div class="summary-line"><span>Detected</span><strong>${itemType} · ${source}</strong></div>
-    <div class="summary-line"><span>Intent</span><strong>${intent}</strong></div>
+    <div class="summary-line"><span>Person</span><strong>${state.persons.findIndex((person) => person.id === activePerson.id) + 1} of ${state.persons.length}</strong></div>
+    <div class="summary-line"><span>Item</span><strong>${state.items.findIndex((item) => item.id === activeItem.id) + 1} of ${state.items.length}</strong></div>
+    <div class="summary-line"><span>AI sees</span><strong>${activeItem.aiLabel}</strong></div>
     <div class="summary-line"><span>Input</span><strong>${warnings.length ? `${warnings.length} warning${warnings.length > 1 ? "s" : ""}` : "Good"}</strong></div>
-    ${warnings.length ? `<p>${warnings.slice(0, 2).join(" / ")}. Auto normalize is ${elements.normalizeToggle.checked ? "on" : "off"}.</p>` : ""}
+    ${warnings.length ? `<p>${warnings.slice(0, 2).join(" / ")}. You can still generate.</p>` : "<p>Ready. Generate uses only this person and this item.</p>"}
   `;
 }
 
@@ -376,8 +755,8 @@ async function analyzeImage(dataUrl) {
 }
 
 function renderQualityPanel() {
-  if (!state.person || !state.garment) {
-    elements.qualityPanel.innerHTML = `<p>Upload both images to check lighting and clarity.</p>`;
+  if (!getActivePerson() || !getActiveItem()) {
+    elements.qualityPanel.innerHTML = `<p>Upload a person and an item to check image clarity.</p>`;
     return;
   }
 
@@ -394,8 +773,8 @@ function renderQualityPanel() {
 }
 
 function buildQualityChecks() {
-  const person = state.person.analysis;
-  const garment = state.garment.analysis;
+  const person = getActivePerson().analysis;
+  const garment = getActiveItem().analysis;
   const brightnessGap = Math.abs(person.brightness - garment.brightness);
   const temperatureGap = Math.abs(person.temperature - garment.temperature);
   const personLongEnough = Math.max(person.width, person.height) >= 900;
@@ -435,7 +814,7 @@ async function normalizeForGeneration(image, role) {
   canvas.width = source.width;
   canvas.height = source.height;
   const ctx = canvas.getContext("2d");
-  const targetBrightness = role === "garment" && state.person?.analysis ? state.person.analysis.brightness : 145;
+  const targetBrightness = role === "garment" && getActivePerson()?.analysis ? getActivePerson().analysis.brightness : 145;
   const delta = Math.max(-24, Math.min(24, targetBrightness - image.analysis.brightness));
   ctx.filter = `brightness(${Math.max(0.82, Math.min(1.18, 1 + delta / 180))}) contrast(1.03)`;
   ctx.drawImage(source, 0, 0);
@@ -451,14 +830,17 @@ function getGarmentSource() {
 }
 
 function getItemType() {
-  return elements.itemTypeSelect.value;
+  return getActiveItem()?.itemType || elements.itemTypeSelect.value;
 }
 
 async function generateResults() {
   elements.formError.textContent = "";
+  const activePerson = getActivePerson();
+  const activeItem = getActiveItem();
+  state.selectedProviders = new Set(chooseDefaultProviders(getAvailableProviders()).map((provider) => provider.id));
 
-  if (!state.person || !state.garment) {
-    elements.formError.textContent = "Add person and garment images first.";
+  if (!activePerson || !activeItem) {
+    elements.formError.textContent = "Add a person image and at least one item image first.";
     return;
   }
 
@@ -467,8 +849,15 @@ async function generateResults() {
     return;
   }
 
-  if (state.remoteEnabled && !state.consentAccepted) {
-    elements.formError.textContent = "Confirm that you are using non-private test images.";
+  if (!state.remoteEnabled) {
+    elements.formError.textContent = "True try-on needs a remote model. Open Remote & correction, turn on Remote Test, then confirm consent.";
+    openSettings();
+    return;
+  }
+
+  if (!state.consentAccepted) {
+    elements.formError.textContent = "Confirm that you are using non-private test images before uploading to the model.";
+    openSettings();
     return;
   }
 
@@ -485,6 +874,12 @@ async function generateResults() {
         garment: 0,
         beauty: 0
       },
+      item: {
+        name: activeItem.name,
+        itemType: activeItem.itemType,
+        source: activeItem.source,
+        aiLabel: activeItem.aiLabel
+      },
       note: ""
     }));
 
@@ -497,7 +892,7 @@ async function generateResults() {
 
   state.isGenerating = false;
   elements.generateButton.disabled = false;
-  elements.generateButton.textContent = "Generate Study";
+  elements.generateButton.textContent = "Generate real try-on";
   elements.saveButton.disabled = !state.results.some((result) => result.status === "success");
   renderResults();
 }
@@ -505,7 +900,7 @@ async function generateResults() {
 async function runProvider(result) {
   renderResults();
   try {
-    const imageUrl = state.remoteEnabled ? await remoteTryOn(result.provider.id) : await mockTryOn(result.provider.id, getMode());
+    const imageUrl = await remoteTryOn(result.provider.id);
     result.status = "success";
     result.imageUrl = imageUrl;
   } catch (error) {
@@ -516,13 +911,15 @@ async function runProvider(result) {
 }
 
 async function remoteTryOn(providerId) {
+  const activePerson = getActivePerson();
+  const activeItem = getActiveItem();
   if (!state.config.keys?.[providerId]) {
     throw new Error("API key missing");
   }
 
   const [personImage, garmentImage] = await Promise.all([
-    normalizeForGeneration(state.person, "person"),
-    normalizeForGeneration(state.garment, "garment")
+    normalizeForGeneration(activePerson, "person"),
+    normalizeForGeneration(activeItem, "garment")
   ]);
 
   const response = await fetch("/api/tryon", {
@@ -533,8 +930,8 @@ async function remoteTryOn(providerId) {
     body: JSON.stringify({
       providerId,
       mode: getMode(),
-      itemType: getItemType(),
-      garmentSource: getGarmentSource(),
+      itemType: activeItem.itemType,
+      garmentSource: activeItem.source,
       autoNormalize: elements.normalizeToggle.checked,
       remoteEnabled: state.remoteEnabled,
       consentAccepted: state.consentAccepted,
@@ -575,35 +972,32 @@ function mockTryOn(providerId, mode) {
 }
 
 async function createMockResultImage(providerId, mode) {
+  const activePerson = getActivePerson();
+  const activeItem = getActiveItem();
   const canvas = document.createElement("canvas");
   canvas.width = 900;
   canvas.height = 1200;
   const ctx = canvas.getContext("2d");
-  const palette = {
-    opensource: ["#f2f2ef", "#111111"],
-    fashn: ["#f7f2ea", "#365b52"],
-    replicate: ["#eef2ef", "#4f5f76"],
-    openai: ["#f5ece8", "#8a5149"]
-  }[providerId];
+  const palette = ["#f7f7f5", "#111111"];
 
   ctx.fillStyle = palette[0];
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const [personImage, garmentImage] = await Promise.all([
-    loadImage(state.person.dataUrl),
-    loadImage(state.garment.dataUrl)
+    loadImage(activePerson.dataUrl),
+    loadImage(activeItem.dataUrl)
   ]);
 
-  drawImageCover(ctx, personImage, 80, 80, 740, 1040, 0.22);
-  drawImageContain(ctx, garmentImage, 245, 300, 410, 470);
+  drawImageCover(ctx, personImage, 130, 70, 640, 980, 1);
+  drawTryOnOverlay(ctx, garmentImage, activeItem.itemType);
 
-  ctx.fillStyle = "rgba(255,255,255,0.76)";
-  ctx.fillRect(0, 1010, canvas.width, 190);
+  ctx.fillStyle = "rgba(255,255,255,0.88)";
+  ctx.fillRect(0, 1000, canvas.width, 200);
   ctx.fillStyle = palette[1];
-  ctx.font = "700 42px system-ui";
-  ctx.fillText(providerLabel(providerId), 70, 1088);
-  ctx.font = "400 26px system-ui";
-  ctx.fillText(modeLabel(mode), 70, 1138);
+  ctx.font = "700 38px system-ui";
+  ctx.fillText("Generated try-on", 70, 1078);
+  ctx.font = "400 24px system-ui";
+  ctx.fillText(`${providerLabel(providerId)} · ${modeLabel(mode)} · ${activeItem.aiLabel}`, 70, 1132);
 
   return canvas.toDataURL("image/png");
 }
@@ -635,6 +1029,25 @@ function drawImageContain(ctx, image, x, y, width, height) {
   ctx.shadowColor = "transparent";
   ctx.strokeStyle = "rgba(31,36,35,0.15)";
   ctx.strokeRect(drawX, drawY, drawWidth, drawHeight);
+}
+
+function drawTryOnOverlay(ctx, image, itemType) {
+  const placement = {
+    top: [270, 240, 360, 350],
+    outerwear: [235, 205, 430, 500],
+    dress: [255, 230, 390, 620],
+    skirt: [285, 520, 330, 320],
+    pants: [265, 520, 370, 470],
+    shoes: [265, 880, 360, 150],
+    bag: [520, 430, 190, 230],
+    hat: [335, 70, 230, 150]
+  }[itemType] || [270, 270, 360, 360];
+
+  ctx.save();
+  ctx.globalAlpha = 0.84;
+  ctx.filter = "grayscale(1) contrast(1.04)";
+  drawImageContain(ctx, image, placement[0], placement[1], placement[2], placement[3]);
+  ctx.restore();
 }
 
 function providerLabel(providerId) {
@@ -682,6 +1095,7 @@ function renderResultCard(result, index) {
           <strong>${result.provider.name}</strong>
           <span class="status-chip">${statusLabel(result.status)}</span>
         </div>
+        <div class="result-item-chip">${result.item.aiLabel || labelForItem(result.item.itemType)} · ${result.item.source === "model" ? "On model" : "Flat-lay"}</div>
         ${renderRatingRow(index, "identity", "Identity")}
         ${renderRatingRow(index, "garment", "Garment")}
         ${renderRatingRow(index, "beauty", "Beauty")}
@@ -763,8 +1177,10 @@ function saveRun() {
     id: crypto.randomUUID(),
     date: new Date().toISOString(),
     mode: getMode(),
-    personName: state.person?.name,
-    garmentName: state.garment?.name,
+    personName: getActivePerson()?.name,
+    garmentName: getActiveItem()?.name,
+    itemCount: state.items.length,
+    activeItemType: getActiveItem()?.itemType,
     results: state.results
       .filter((result) => result.status === "success")
       .map((result) => ({
@@ -822,13 +1238,15 @@ function clearSavedRuns() {
 }
 
 function resetRun() {
-  state.person = null;
-  state.garment = null;
+  state.persons = [];
+  state.activePersonId = "";
+  state.items = [];
+  state.activeItemId = "";
   state.results = [];
   elements.personInput.value = "";
   elements.garmentInput.value = "";
-  elements.personMeta.textContent = "No image selected";
-  elements.garmentMeta.textContent = "No image selected";
+  elements.personMeta.textContent = "No people yet";
+  elements.garmentMeta.textContent = "No items yet";
   [elements.personPreview, elements.garmentPreview].forEach((preview) => {
     preview.hidden = true;
     preview.removeAttribute("src");
@@ -836,6 +1254,9 @@ function resetRun() {
   [elements.personDropzone, elements.garmentDropzone].forEach((dropzone) => dropzone.classList.remove("has-image"));
   elements.formError.textContent = "";
   elements.saveButton.disabled = true;
+  renderPersonStrip();
+  renderItemShelf();
+  renderMoodBoard();
   renderQualityPanel();
   renderAutoSummary();
   renderResults();
