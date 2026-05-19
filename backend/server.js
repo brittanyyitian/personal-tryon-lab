@@ -81,9 +81,8 @@ function readJsonBody(request) {
 
     request.on("data", (chunk) => {
       body += chunk;
-      if (body.length > 30 * 1024 * 1024) {
-        reject(Object.assign(new Error("Request body is too large."), { statusCode: 413 }));
-        request.destroy();
+      if (body.length > 80 * 1024 * 1024) {
+        reject(Object.assign(new Error("Request body is too large. Use smaller test images."), { statusCode: 413 }));
       }
     });
 

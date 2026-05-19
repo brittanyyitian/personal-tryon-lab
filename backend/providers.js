@@ -48,7 +48,7 @@ function assertImageData(value, label) {
     throw error;
   }
 
-  if (Buffer.byteLength(value, "utf8") > 14 * 1024 * 1024) {
+  if (Buffer.byteLength(value, "utf8") > 22 * 1024 * 1024) {
     const error = new Error(`${label} is too large.`);
     error.statusCode = 413;
     throw error;

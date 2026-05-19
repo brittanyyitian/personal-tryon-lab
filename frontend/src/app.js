@@ -195,17 +195,18 @@ function setImage(type, file) {
     return;
   }
 
-  if (file.size > 12 * 1024 * 1024) {
-    errorElement.textContent = "Image must be under 12MB.";
+  if (file.size > 18 * 1024 * 1024) {
+    errorElement.textContent = "Image must be under 18MB.";
     return;
   }
 
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
+    const dataUrl = await prepareImageDataUrl(reader.result);
     const image = {
       name: file.name,
       size: file.size,
-      dataUrl: reader.result
+      dataUrl
     };
     state[type] = image;
     previewElement.src = image.dataUrl;
@@ -214,6 +215,22 @@ function setImage(type, file) {
     elements.formError.textContent = "";
   };
   reader.readAsDataURL(file);
+}
+
+async function prepareImageDataUrl(dataUrl) {
+  const image = await loadImage(dataUrl);
+  const maxSide = 1536;
+  const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+  if (scale === 1 && dataUrl.length < 5 * 1024 * 1024) {
+    return dataUrl;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(image.width * scale));
+  canvas.height = Math.max(1, Math.round(image.height * scale));
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", 0.86);
 }
 
 function getMode() {
