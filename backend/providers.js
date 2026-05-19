@@ -239,7 +239,8 @@ async function runOpenSourceVton(payload) {
       mode: payload.mode
     }));
 
-    return providerResult("opensource", extractImageUrl(result), result);
+    const imageUrl = extractImageUrl(result);
+    return providerResult("opensource", await normalizeImageForBrowser(imageUrl), result);
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
@@ -348,6 +349,35 @@ function writeDataUrl(dataUrl, filePath) {
     throw new Error("Invalid image data.");
   }
   fs.writeFileSync(filePath, Buffer.from(base64, "base64"));
+}
+
+async function normalizeImageForBrowser(imageUrl) {
+  if (!imageUrl) {
+    return "";
+  }
+
+  if (imageUrl.startsWith("data:image/")) {
+    return imageUrl;
+  }
+
+  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new Error(`Could not fetch generated image: ${response.status}`);
+    }
+    const contentType = response.headers.get("content-type") || "image/png";
+    const bytes = Buffer.from(await response.arrayBuffer());
+    return `data:${contentType};base64,${bytes.toString("base64")}`;
+  }
+
+  const fs = require("node:fs");
+  if (fs.existsSync(imageUrl)) {
+    const bytes = fs.readFileSync(imageUrl);
+    const mimeType = imageUrl.toLowerCase().endsWith(".jpg") || imageUrl.toLowerCase().endsWith(".jpeg") ? "image/jpeg" : "image/png";
+    return `data:${mimeType};base64,${bytes.toString("base64")}`;
+  }
+
+  return imageUrl;
 }
 
 function openSourceGarmentPrompt(mode) {
