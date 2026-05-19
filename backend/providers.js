@@ -174,7 +174,7 @@ async function runOpenAI(apiKey, payload) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_RESPONSES_MODEL || "gpt-4.1-mini",
+      model: process.env.OPENAI_RESPONSES_MODEL || "gpt-4o-mini",
       input: [
         {
           role: "user",
