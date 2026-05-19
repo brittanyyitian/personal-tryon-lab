@@ -239,7 +239,15 @@ async function runOpenSourceVton(payload) {
       mode: payload.mode
     }));
 
+    const statusMessage = extractStatusMessage(result);
+    if (statusMessage) {
+      throw providerError(statusMessage, summarizeShape(result));
+    }
+
     const imageUrl = extractImageUrl(result);
+    if (!imageUrl) {
+      throw providerError("OPEN SOURCE VTON did not return an image URL.", summarizeShape(result));
+    }
     return providerResult("opensource", await normalizeImageForBrowser(imageUrl), result);
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
@@ -348,6 +356,38 @@ function looksLikeImageReference(value) {
   );
 }
 
+function extractStatusMessage(data) {
+  if (!data) {
+    return "";
+  }
+
+  if (typeof data === "string") {
+    return looksLikeImageReference(data) ? "" : data;
+  }
+
+  if (Array.isArray(data)) {
+    return data.map(extractStatusMessage).find(Boolean) || "";
+  }
+
+  if (typeof data !== "object") {
+    return "";
+  }
+
+  if (typeof data.error === "string") {
+    return data.error;
+  }
+
+  if (typeof data.message === "string") {
+    return data.message;
+  }
+
+  if (data.data) {
+    return extractStatusMessage(data.data);
+  }
+
+  return "";
+}
+
 function writeDataUrl(dataUrl, filePath) {
   const fs = require("node:fs");
   const base64 = dataUrl.split(",")[1];
@@ -406,6 +446,38 @@ function providerError(message, details) {
   const error = new Error(message);
   error.details = details;
   return error;
+}
+
+function summarizeShape(value, depth = 0) {
+  if (depth > 3) {
+    return typeof value;
+  }
+
+  if (value == null) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return value.length > 240 ? `${value.slice(0, 240)}...` : value;
+  }
+
+  if (typeof value !== "object") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.slice(0, 5).map((item) => summarizeShape(item, depth + 1));
+  }
+
+  const output = {};
+  for (const [key, item] of Object.entries(value).slice(0, 20)) {
+    if (key.toLowerCase().includes("base64") || key.toLowerCase().includes("b64")) {
+      output[key] = "[base64 omitted]";
+    } else {
+      output[key] = summarizeShape(item, depth + 1);
+    }
+  }
+  return output;
 }
 
 function sleep(ms) {
