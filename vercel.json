@@ -1,0 +1,21 @@
+{
+  "functions": {
+    "api/tryon.js": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/frontend/src/index.html"
+    },
+    {
+      "source": "/styles.css",
+      "destination": "/frontend/src/styles.css"
+    },
+    {
+      "source": "/app.js",
+      "destination": "/frontend/src/app.js"
+    }
+  ]
+}
