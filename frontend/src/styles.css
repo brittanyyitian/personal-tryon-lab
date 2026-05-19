@@ -420,6 +420,19 @@ h2 {
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.22);
 }
 
+.settings-footer {
+  position: sticky;
+  bottom: -22px;
+  margin: 22px -22px -22px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.settings-footer .primary-button {
+  width: 100%;
+}
+
 .settings-header {
   display: flex;
   align-items: start;

@@ -70,6 +70,7 @@ const elements = {
   settingsButton: document.querySelector("#settingsButton"),
   settingsPanel: document.querySelector("#settingsPanel"),
   settingsCloseButton: document.querySelector("#settingsCloseButton"),
+  settingsDoneButton: document.querySelector("#settingsDoneButton"),
   formError: document.querySelector("#formError"),
   generateButton: document.querySelector("#generateButton"),
   resetButton: document.querySelector("#resetButton"),
@@ -118,6 +119,7 @@ async function init() {
 function bindSettingsModal() {
   elements.settingsButton.addEventListener("click", openSettings);
   elements.settingsCloseButton.addEventListener("click", closeSettings);
+  elements.settingsDoneButton.addEventListener("click", closeSettings);
   elements.settingsPanel.addEventListener("click", (event) => {
     if (event.target === elements.settingsPanel) {
       closeSettings();
@@ -131,6 +133,7 @@ function bindSettingsModal() {
 }
 
 function openSettings() {
+  renderRemoteState();
   elements.settingsPanel.hidden = false;
   document.body.classList.add("modal-open");
   elements.settingsCloseButton.focus();
@@ -205,6 +208,8 @@ function renderProviders() {
 }
 
 function renderRemoteState() {
+  elements.remoteToggle.checked = state.remoteEnabled;
+  elements.consentCheckbox.checked = state.consentAccepted;
   elements.navStatus.textContent = state.remoteEnabled ? "REMOTE TEST" : "LOCAL MODE";
   elements.privacyNote.textContent = state.remoteEnabled
     ? "Remote test mode is on. Selected images will be uploaded only after consent and Generate real try-on."
