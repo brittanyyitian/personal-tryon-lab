@@ -2,17 +2,17 @@ const providers = [
   {
     id: "fashn",
     name: "FASHN",
-    description: "主试穿模型"
+    description: "Primary try-on model"
   },
   {
     id: "idm",
     name: "IDM-VTON",
-    description: "便宜对照组"
+    description: "Benchmark model"
   },
   {
     id: "openai",
-    name: "OpenAI 美化",
-    description: "轻美化/出片"
+    name: "OPENAI BEAUTY",
+    description: "Beauty and editorial pass"
   }
 ];
 
@@ -34,6 +34,7 @@ const elements = {
   personError: document.querySelector("#personError"),
   garmentError: document.querySelector("#garmentError"),
   providerGroup: document.querySelector("#providerGroup"),
+  themeSwitcher: document.querySelector("#themeSwitcher"),
   formError: document.querySelector("#formError"),
   generateButton: document.querySelector("#generateButton"),
   resetButton: document.querySelector("#resetButton"),
@@ -51,11 +52,23 @@ function init() {
   bindUpload(elements.garmentInput, "garment");
   bindDropzone(elements.personDropzone, "person");
   bindDropzone(elements.garmentDropzone, "garment");
+  bindThemeSwitcher();
   elements.generateButton.addEventListener("click", generateResults);
   elements.resetButton.addEventListener("click", resetRun);
   elements.saveButton.addEventListener("click", saveRun);
   elements.clearSavedButton.addEventListener("click", clearSavedRuns);
   renderSavedRuns();
+}
+
+function bindThemeSwitcher() {
+  elements.themeSwitcher.querySelectorAll("[data-theme]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.body.dataset.theme = button.dataset.theme;
+      elements.themeSwitcher.querySelectorAll("[data-theme]").forEach((item) => {
+        item.classList.toggle("active", item === button);
+      });
+    });
+  });
 }
 
 function renderProviders() {
@@ -121,12 +134,12 @@ function setImage(type, file) {
   errorElement.textContent = "";
 
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-    errorElement.textContent = "请上传 jpg、png 或 webp 图片。";
+    errorElement.textContent = "Use jpg, png, or webp.";
     return;
   }
 
   if (file.size > 12 * 1024 * 1024) {
-    errorElement.textContent = "图片需小于 12MB。";
+    errorElement.textContent = "Image must be under 12MB.";
     return;
   }
 
@@ -154,12 +167,12 @@ async function generateResults() {
   elements.formError.textContent = "";
 
   if (!state.person || !state.garment) {
-    elements.formError.textContent = "请先上传人物图和衣服图。";
+    elements.formError.textContent = "Add person and garment images first.";
     return;
   }
 
   if (state.selectedProviders.size === 0) {
-    elements.formError.textContent = "至少选择一个模型。";
+    elements.formError.textContent = "Select at least one model.";
     return;
   }
 
@@ -181,14 +194,14 @@ async function generateResults() {
 
   renderResults();
   elements.generateButton.disabled = true;
-  elements.generateButton.textContent = "生成中";
+  elements.generateButton.textContent = "Rendering";
   elements.saveButton.disabled = true;
 
   await Promise.all(state.results.map((result) => runProvider(result)));
 
   state.isGenerating = false;
   elements.generateButton.disabled = false;
-  elements.generateButton.textContent = "开始生成";
+  elements.generateButton.textContent = "Generate Study";
   elements.saveButton.disabled = !state.results.some((result) => result.status === "success");
   renderResults();
 }
@@ -201,7 +214,7 @@ async function runProvider(result) {
     result.imageUrl = imageUrl;
   } catch (error) {
     result.status = "error";
-    result.error = error.message || "生成失败";
+    result.error = error.message || "Generation failed";
   }
   renderResults();
 }
@@ -292,9 +305,9 @@ function providerLabel(providerId) {
 
 function modeLabel(mode) {
   return {
-    real: "真实试穿 mock",
-    soft: "轻美化 mock",
-    editorial: "出片图 mock"
+    real: "Real try-on mock",
+    soft: "Soft polish mock",
+    editorial: "Editorial mock"
   }[mode];
 }
 
@@ -317,10 +330,10 @@ function renderResults() {
 function renderResultCard(result, index) {
   const imageContent =
     result.status === "loading"
-      ? `<div class="result-image loading">生成中...</div>`
+      ? `<div class="result-image loading">Rendering...</div>`
       : result.status === "error"
-        ? `<div class="result-image error">${result.error}<br /><button class="secondary-button retry-button" data-index="${index}" type="button">重试此模型</button></div>`
-        : `<div class="result-image"><img src="${result.imageUrl}" alt="${result.provider.name} 生成结果" /></div>`;
+        ? `<div class="result-image error">${result.error}<br /><button class="secondary-button retry-button" data-index="${index}" type="button">Retry</button></div>`
+        : `<div class="result-image"><img src="${result.imageUrl}" alt="${result.provider.name} result" /></div>`;
 
   return `
     <article class="result-card">
@@ -330,10 +343,10 @@ function renderResultCard(result, index) {
           <strong>${result.provider.name}</strong>
           <span class="status-chip">${statusLabel(result.status)}</span>
         </div>
-        ${renderRatingRow(index, "identity", "像本人")}
-        ${renderRatingRow(index, "garment", "衣服准")}
-        ${renderRatingRow(index, "beauty", "好看度")}
-        <textarea data-note-index="${index}" placeholder="备注：哪里像、哪里假、是否值得继续用">${result.note}</textarea>
+        ${renderRatingRow(index, "identity", "Identity")}
+        ${renderRatingRow(index, "garment", "Garment")}
+        ${renderRatingRow(index, "beauty", "Beauty")}
+        <textarea data-note-index="${index}" placeholder="Note: what feels true, false, or worth keeping">${result.note}</textarea>
       </div>
     </article>
   `;
@@ -356,9 +369,9 @@ function renderRatingRow(index, key, label) {
 
 function statusLabel(status) {
   return {
-    loading: "生成中",
-    success: "可评分",
-    error: "失败"
+    loading: "Rendering",
+    success: "Ready",
+    error: "Failed"
   }[status];
 }
 
@@ -413,7 +426,7 @@ function saveRun() {
 
   localStorage.setItem("tryon.savedRuns", JSON.stringify([run, ...savedRuns].slice(0, 20)));
   renderSavedRuns();
-  showToast("已保存本次评测");
+  showToast("Saved locally");
 }
 
 function getSavedRuns() {
@@ -427,7 +440,7 @@ function getSavedRuns() {
 function renderSavedRuns() {
   const savedRuns = getSavedRuns();
   if (savedRuns.length === 0) {
-    elements.savedList.innerHTML = `<div class="saved-item">暂无已保存评测</div>`;
+    elements.savedList.innerHTML = `<div class="saved-item">No saved studies</div>`;
     return;
   }
 
@@ -437,7 +450,7 @@ function renderSavedRuns() {
       return `
         <div class="saved-item">
           <span>${new Date(run.date).toLocaleString()} · ${modeLabel(run.mode).replace(" mock", "")}</span>
-          <strong>${average ? `${average}/5` : "未评分"}</strong>
+          <strong>${average ? `${average}/5` : "Unrated"}</strong>
         </div>
       `;
     })
@@ -455,7 +468,7 @@ function averageScore(results) {
 function clearSavedRuns() {
   localStorage.removeItem("tryon.savedRuns");
   renderSavedRuns();
-  showToast("已清空保存记录");
+  showToast("Cleared");
 }
 
 function resetRun() {
