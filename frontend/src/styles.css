@@ -212,6 +212,19 @@ h2 {
   text-transform: uppercase;
 }
 
+.upload-meta {
+  display: block;
+  max-width: 100%;
+  margin-top: 12px;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .dropzone img {
   position: absolute;
   inset: 0;
@@ -224,7 +237,8 @@ h2 {
 
 .dropzone.has-image .dropzone-index,
 .dropzone.has-image .dropzone-label,
-.dropzone.has-image .dropzone-copy {
+.dropzone.has-image .dropzone-copy,
+.dropzone.has-image .upload-meta {
   z-index: 1;
   width: max-content;
   max-width: calc(100% - 32px);
@@ -247,13 +261,68 @@ h2 {
 }
 
 .control-panel {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  display: grid;
+  align-content: space-between;
+  gap: 18px;
   min-height: clamp(360px, 46vw, 610px);
   border: 1px solid var(--line);
   background: var(--surface);
   padding: 22px;
+}
+
+.auto-card {
+  display: grid;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.auto-card h2 {
+  font-size: clamp(32px, 4vw, 52px);
+}
+
+.auto-summary {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+  text-transform: uppercase;
+}
+
+.summary-line strong {
+  color: var(--ink);
+  text-align: right;
+}
+
+.auto-summary p {
+  margin: 0;
+}
+
+.advanced-panel {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 14px;
+}
+
+.advanced-panel summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.advanced-panel[open] summary {
+  margin-bottom: 18px;
+  color: var(--ink);
 }
 
 .control-block + .control-block {

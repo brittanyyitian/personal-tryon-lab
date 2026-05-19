@@ -24,7 +24,7 @@ const providers = [
 const state = {
   person: null,
   garment: null,
-  selectedProviders: new Set(providers.map((provider) => provider.id)),
+  selectedProviders: new Set(["opensource"]),
   results: [],
   isGenerating: false,
   remoteEnabled: false,
@@ -44,6 +44,8 @@ const elements = {
   garmentInput: document.querySelector("#garmentInput"),
   personPreview: document.querySelector("#personPreview"),
   garmentPreview: document.querySelector("#garmentPreview"),
+  personMeta: document.querySelector("#personMeta"),
+  garmentMeta: document.querySelector("#garmentMeta"),
   personDropzone: document.querySelector("#personDropzone"),
   garmentDropzone: document.querySelector("#garmentDropzone"),
   personError: document.querySelector("#personError"),
@@ -55,6 +57,8 @@ const elements = {
   remoteCopy: document.querySelector("#remoteCopy"),
   consentCheckbox: document.querySelector("#consentCheckbox"),
   keyStatus: document.querySelector("#keyStatus"),
+  autoTitle: document.querySelector("#autoTitle"),
+  autoSummary: document.querySelector("#autoSummary"),
   itemTypeSelect: document.querySelector("#itemTypeSelect"),
   normalizeToggle: document.querySelector("#normalizeToggle"),
   qualityPanel: document.querySelector("#qualityPanel"),
@@ -82,7 +86,12 @@ async function init() {
   elements.resetButton.addEventListener("click", resetRun);
   elements.saveButton.addEventListener("click", saveRun);
   elements.clearSavedButton.addEventListener("click", clearSavedRuns);
+  elements.itemTypeSelect.addEventListener("change", renderAutoSummary);
+  document.querySelectorAll("input[name='mode'], input[name='garmentSource']").forEach((input) => {
+    input.addEventListener("change", renderAutoSummary);
+  });
   renderRemoteState();
+  renderAutoSummary();
   renderSavedRuns();
 }
 
@@ -125,7 +134,7 @@ function renderProviders() {
     .map(
       (provider) => `
         <label title="${provider.description}">
-          <input type="checkbox" value="${provider.id}" checked />
+          <input type="checkbox" value="${provider.id}" ${state.selectedProviders.has(provider.id) ? "checked" : ""} />
           ${provider.name}
         </label>
       `
@@ -223,10 +232,95 @@ function setImage(type, file) {
     previewElement.src = image.dataUrl;
     previewElement.hidden = false;
     dropzoneElement.classList.add("has-image");
+    renderUploadMeta(type, image);
+    inferSettingsFromUpload(type, image);
     elements.formError.textContent = "";
     renderQualityPanel();
+    renderAutoSummary();
   };
   reader.readAsDataURL(file);
+}
+
+function renderUploadMeta(type, image) {
+  const meta = type === "person" ? elements.personMeta : elements.garmentMeta;
+  const megapixels = ((image.analysis.width * image.analysis.height) / 1000000).toFixed(1);
+  meta.textContent = `${image.name} · ${image.analysis.width}x${image.analysis.height} · ${megapixels}MP`;
+}
+
+function inferSettingsFromUpload(type, image) {
+  if (type !== "garment") {
+    return;
+  }
+
+  const itemType = inferItemType(image.name);
+  elements.itemTypeSelect.value = itemType;
+
+  const source = inferGarmentSource(image.name);
+  const sourceInput = document.querySelector(`input[name='garmentSource'][value='${source}']`);
+  if (sourceInput) {
+    sourceInput.checked = true;
+  }
+
+  const modeInput = document.querySelector(`input[name='mode'][value='fit']`);
+  if (modeInput) {
+    modeInput.checked = true;
+  }
+}
+
+function inferItemType(fileName) {
+  const name = fileName.toLowerCase();
+  const rules = [
+    ["dress", ["dress", "gown", "连衣裙", "裙"]],
+    ["pants", ["pants", "trouser", "jeans", "牛仔", "裤"]],
+    ["skirt", ["skirt", "半裙"]],
+    ["outerwear", ["coat", "jacket", "blazer", "outer", "外套", "大衣", "西装"]],
+    ["shoes", ["shoe", "sneaker", "boot", "heel", "鞋", "靴"]],
+    ["bag", ["bag", "purse", "tote", "包"]],
+    ["hat", ["hat", "cap", "帽"]],
+    ["top", ["shirt", "tee", "tshirt", "sweater", "top", "blouse", "上衣", "衬衫", "毛衣"]]
+  ];
+
+  return rules.find(([, words]) => words.some((word) => name.includes(word)))?.[0] || "top";
+}
+
+function inferGarmentSource(fileName) {
+  const name = fileName.toLowerCase();
+  return ["model", "wear", "try", "模特", "上身", "穿"].some((word) => name.includes(word)) ? "model" : "flat-lay";
+}
+
+function renderAutoSummary() {
+  const hasBoth = Boolean(state.person && state.garment);
+  const itemType = labelForItem(getItemType());
+  const source = getGarmentSource() === "model" ? "On model" : "Flat-lay";
+  const intent = getMode() === "styled" ? "Styled Look" : "Fit Check";
+
+  if (!hasBoth) {
+    elements.autoTitle.textContent = "Upload Images";
+    elements.autoSummary.innerHTML = "Add a person image and an item image. Settings will be inferred automatically.";
+    return;
+  }
+
+  const warnings = buildQualityChecks().filter((check) => check.status !== "Good").map((check) => check.label);
+  elements.autoTitle.textContent = `${itemType} Study`;
+  elements.autoSummary.innerHTML = `
+    <div class="summary-line"><span>Detected</span><strong>${itemType} · ${source}</strong></div>
+    <div class="summary-line"><span>Intent</span><strong>${intent}</strong></div>
+    <div class="summary-line"><span>Input</span><strong>${warnings.length ? `${warnings.length} warning${warnings.length > 1 ? "s" : ""}` : "Good"}</strong></div>
+    ${warnings.length ? `<p>${warnings.slice(0, 2).join(" / ")}. Auto normalize is ${elements.normalizeToggle.checked ? "on" : "off"}.</p>` : ""}
+  `;
+}
+
+function labelForItem(value) {
+  return {
+    top: "Top",
+    outerwear: "Outerwear",
+    dress: "Dress",
+    skirt: "Skirt",
+    pants: "Pants",
+    shoes: "Shoes",
+    bag: "Bag",
+    hat: "Hat"
+  }[value] || "Item";
 }
 
 async function prepareImageDataUrl(dataUrl) {
@@ -549,9 +643,8 @@ function providerLabel(providerId) {
 
 function modeLabel(mode) {
   return {
-    real: "Real try-on mock",
-    soft: "Soft polish mock",
-    editorial: "Editorial mock"
+    fit: "Fit check mock",
+    styled: "Styled look mock"
   }[mode];
 }
 
@@ -734,6 +827,8 @@ function resetRun() {
   state.results = [];
   elements.personInput.value = "";
   elements.garmentInput.value = "";
+  elements.personMeta.textContent = "No image selected";
+  elements.garmentMeta.textContent = "No image selected";
   [elements.personPreview, elements.garmentPreview].forEach((preview) => {
     preview.hidden = true;
     preview.removeAttribute("src");
@@ -742,6 +837,7 @@ function resetRun() {
   elements.formError.textContent = "";
   elements.saveButton.disabled = true;
   renderQualityPanel();
+  renderAutoSummary();
   renderResults();
 }
 

@@ -33,6 +33,7 @@
             <span class="dropzone-index">01</span>
             <span class="dropzone-label">PERSON</span>
             <span class="dropzone-copy">ADD FULL BODY IMAGE</span>
+            <span class="upload-meta" id="personMeta">No image selected</span>
             <img id="personPreview" alt="" hidden />
             <span class="dropzone-error" id="personError"></span>
           </label>
@@ -42,59 +43,70 @@
             <span class="dropzone-index">02</span>
             <span class="dropzone-label">GARMENT</span>
             <span class="dropzone-copy">ADD PRODUCT IMAGE</span>
+            <span class="upload-meta" id="garmentMeta">No image selected</span>
             <img id="garmentPreview" alt="" hidden />
             <span class="dropzone-error" id="garmentError"></span>
           </label>
         </div>
 
         <div class="control-panel">
-          <div class="control-block">
-            <span class="control-title">MODEL</span>
-            <div class="pill-row" id="providerGroup" role="group" aria-label="模型选择"></div>
-          </div>
-
-          <div class="control-block">
-            <span class="control-title">STUDY INTENT</span>
-            <div class="segment" role="radiogroup" aria-label="生成意图">
-              <label><input type="radio" name="mode" value="fit" checked />Fit Check</label>
-              <label><input type="radio" name="mode" value="styled" />Styled Look</label>
+          <div class="auto-card">
+            <p class="eyebrow">AUTO STUDY</p>
+            <h2 id="autoTitle">Upload Images</h2>
+            <div class="auto-summary" id="autoSummary">
+              Add a person image and an item image. Settings will be inferred automatically.
             </div>
           </div>
 
-          <div class="control-block">
-            <span class="control-title">ITEM TYPE</span>
-            <select class="select-control" id="itemTypeSelect">
-              <option value="top">Top</option>
-              <option value="outerwear">Outerwear</option>
-              <option value="dress">Dress</option>
-              <option value="skirt">Skirt</option>
-              <option value="pants">Pants</option>
-              <option value="shoes">Shoes</option>
-              <option value="bag">Bag</option>
-              <option value="hat">Hat</option>
-            </select>
-          </div>
-
-          <div class="control-block">
-            <span class="control-title">GARMENT SOURCE</span>
-            <div class="segment" role="radiogroup" aria-label="衣服图片来源">
-              <label><input type="radio" name="garmentSource" value="flat-lay" checked />Flat-lay</label>
-              <label><input type="radio" name="garmentSource" value="model" />On model</label>
+          <details class="advanced-panel">
+            <summary>Advanced Settings</summary>
+            <div class="control-block">
+              <span class="control-title">MODEL</span>
+              <div class="pill-row" id="providerGroup" role="group" aria-label="模型选择"></div>
             </div>
-          </div>
 
-          <div class="control-block">
-            <span class="control-title">INPUT CHECK</span>
-            <div class="quality-panel" id="qualityPanel">
-              <p>Upload both images to check lighting and clarity.</p>
+            <div class="control-block">
+              <span class="control-title">STUDY INTENT</span>
+              <div class="segment" role="radiogroup" aria-label="生成意图">
+                <label><input type="radio" name="mode" value="fit" checked />Fit Check</label>
+                <label><input type="radio" name="mode" value="styled" />Styled Look</label>
+              </div>
             </div>
-            <label class="consent-row normalize-row">
-              <input id="normalizeToggle" type="checkbox" checked />
-              <span>Auto normalize brightness before generation.</span>
-            </label>
-          </div>
 
-          <div class="remote-panel">
+            <div class="control-block">
+              <span class="control-title">ITEM TYPE</span>
+              <select class="select-control" id="itemTypeSelect">
+                <option value="top">Top</option>
+                <option value="outerwear">Outerwear</option>
+                <option value="dress">Dress</option>
+                <option value="skirt">Skirt</option>
+                <option value="pants">Pants</option>
+                <option value="shoes">Shoes</option>
+                <option value="bag">Bag</option>
+                <option value="hat">Hat</option>
+              </select>
+            </div>
+
+            <div class="control-block">
+              <span class="control-title">GARMENT SOURCE</span>
+              <div class="segment" role="radiogroup" aria-label="衣服图片来源">
+                <label><input type="radio" name="garmentSource" value="flat-lay" checked />Flat-lay</label>
+                <label><input type="radio" name="garmentSource" value="model" />On model</label>
+              </div>
+            </div>
+
+            <div class="control-block">
+              <span class="control-title">INPUT CHECK</span>
+              <div class="quality-panel" id="qualityPanel">
+                <p>Upload both images to check lighting and clarity.</p>
+              </div>
+              <label class="consent-row normalize-row">
+                <input id="normalizeToggle" type="checkbox" checked />
+                <span>Auto normalize brightness before generation.</span>
+              </label>
+            </div>
+
+            <div class="remote-panel">
             <div class="remote-header">
               <span class="control-title">REMOTE TEST</span>
               <label class="switch">
@@ -108,7 +120,8 @@
               <input id="consentCheckbox" type="checkbox" disabled />
               <span>I am using non-private test images and understand they will be uploaded.</span>
             </label>
-          </div>
+            </div>
+          </details>
 
           <div class="action-row">
             <p class="inline-error" id="formError"></p>
