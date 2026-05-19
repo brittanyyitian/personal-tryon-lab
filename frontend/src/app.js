@@ -26,6 +26,7 @@ const state = {
   activePersonId: "",
   items: [],
   activeItemId: "",
+  replacingItemId: "",
   selectedProviders: new Set(["opensource"]),
   results: [],
   isGenerating: false,
@@ -248,10 +249,15 @@ function bindUpload(input, type) {
   input.addEventListener("change", () => {
     const files = Array.from(input.files || []);
     if (type === "garment") {
-      setItemImages(files);
+      if (state.replacingItemId && files[0]) {
+        replaceItemImage(state.replacingItemId, files[0]);
+      } else {
+        setItemImages(files);
+      }
     } else {
       setPersonImages(files);
     }
+    state.replacingItemId = "";
   });
 }
 
@@ -290,6 +296,30 @@ async function setItemImages(files) {
   for (const file of files) {
     await setImage("garment", file);
   }
+}
+
+async function replaceItemImage(itemId, file) {
+  const originalIndex = state.items.findIndex((item) => item.id === itemId);
+  if (originalIndex === -1) {
+    return;
+  }
+
+  const previousActiveId = state.activeItemId;
+  await setImage("garment", file);
+  const replacement = state.items.pop();
+  if (!replacement) {
+    return;
+  }
+
+  replacement.id = itemId;
+  state.items[originalIndex] = replacement;
+  state.activeItemId = previousActiveId === itemId ? itemId : previousActiveId;
+  if (state.activeItemId === itemId) {
+    syncControlsFromItem(replacement);
+  }
+  renderItemShelf();
+  renderMoodBoard();
+  renderAutoSummary();
 }
 
 function setImage(type, file) {
@@ -476,22 +506,41 @@ function renderItemShelf() {
   }
 
   elements.itemShelf.innerHTML = state.items
-    .map((item) => `
-      <button class="item-card ${item.id === state.activeItemId ? "active" : ""}" data-item-id="${item.id}" type="button">
-        <img src="${item.dataUrl}" alt="" />
-        <span>
-          <strong>${labelForItem(item.itemType)}</strong>
-          <small>${item.aiLabel}</small>
-        </span>
-      </button>
+    .map((item, index) => `
+      <article class="item-card ${item.id === state.activeItemId ? "active" : ""}" data-item-id="${item.id}">
+        <button class="item-card-main" data-item-select="${item.id}" type="button">
+          <span class="item-card-index">${String(index + 1).padStart(2, "0")}</span>
+          <img src="${item.dataUrl}" alt="" />
+          <span class="item-card-copy">
+            <strong>${item.aiLabel}</strong>
+            <small>${labelForItem(item.itemType)} · ${item.source === "model" ? "On model" : "Flat-lay"}</small>
+            <em>${item.name}</em>
+          </span>
+        </button>
+        <div class="item-actions">
+          <button data-item-replace="${item.id}" type="button">Replace</button>
+          <button class="item-remove-button" data-item-remove="${item.id}" type="button" aria-label="Remove ${item.aiLabel}">×</button>
+        </div>
+      </article>
     `)
     .join("");
 
-  elements.itemShelf.querySelectorAll("[data-item-id]").forEach((button) => {
+  elements.itemShelf.querySelectorAll("[data-item-select]").forEach((button) => {
     button.addEventListener("click", () => {
-      setActiveItem(button.dataset.itemId);
+      setActiveItem(button.dataset.itemSelect);
       renderQualityPanel();
       renderAutoSummary();
+    });
+  });
+  elements.itemShelf.querySelectorAll("[data-item-replace]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.replacingItemId = button.dataset.itemReplace;
+      elements.garmentInput.click();
+    });
+  });
+  elements.itemShelf.querySelectorAll("[data-item-remove]").forEach((button) => {
+    button.addEventListener("click", () => {
+      removeItem(button.dataset.itemRemove);
     });
   });
 
@@ -499,6 +548,37 @@ function renderItemShelf() {
   if (active) {
     renderUploadMeta("garment", active);
   }
+}
+
+function removeItem(itemId) {
+  const index = state.items.findIndex((item) => item.id === itemId);
+  if (index === -1) {
+    return;
+  }
+
+  state.items.splice(index, 1);
+  if (state.activeItemId === itemId) {
+    state.activeItemId = state.items[Math.max(0, index - 1)]?.id || state.items[0]?.id || "";
+    if (state.activeItemId) {
+      syncControlsFromItem(getActiveItem());
+    }
+  }
+
+  if (state.items.length === 0) {
+    elements.garmentPreview.hidden = true;
+    elements.garmentPreview.removeAttribute("src");
+    elements.garmentDropzone.classList.remove("has-image");
+  } else if (state.activeItemId) {
+    const activeItem = getActiveItem();
+    elements.garmentPreview.src = activeItem.dataUrl;
+    elements.garmentPreview.hidden = false;
+    renderUploadMeta("garment", activeItem);
+  }
+
+  renderItemShelf();
+  renderMoodBoard();
+  renderQualityPanel();
+  renderAutoSummary();
 }
 
 function renderMoodBoard() {
