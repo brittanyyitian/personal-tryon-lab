@@ -89,6 +89,18 @@ h2 {
   font-size: 15px;
 }
 
+.privacy-note {
+  display: inline-flex;
+  margin: 16px 0 0;
+  padding: 8px 10px;
+  border: 1px solid #bfd1ca;
+  border-radius: 8px;
+  background: #edf5f1;
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .icon-button,
 .secondary-button,
 .primary-button {
