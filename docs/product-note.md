@@ -4,20 +4,20 @@ This is a private prototype for evaluating AI virtual try-on quality before buil
 
 The project is split into:
 
-- `frontend/src`: the A Minimal browser UI
+- `frontend/src`: the minimal browser UI
 - `backend`: the local Node server and remote provider proxy
 
 ## Local-Only Privacy Rule
 
-By default, the app starts in local mode and must not upload images or call remote APIs. Images are read by the browser with `FileReader`, mock outputs are generated on a local canvas, and saved notes stay in browser `localStorage`.
+Local development can run without uploads, but the current personal testing flow defaults to remote try-on enabled with explicit non-private test-image consent checked in the UI. Images are read by the browser with `FileReader`, and saved notes stay in browser `localStorage`.
 
-Remote provider calls are allowed only in Level 2 remote test mode, and only after the UI consent checkbox is enabled. Use non-private test images only.
+Remote provider calls should use non-private test images only.
 
 Do not add external scripts, analytics, or remote image URLs without confirming that remote upload is intended.
 
 ## MVP Goal
 
-Upload one person reference image and one garment image, run several try-on providers, compare the generated images side by side, then rate:
+Upload one or more person reference images and multiple outfit items, pick the active person/item on the board, run a try-on provider, compare generated results, then rate:
 
 - identity similarity
 - garment fidelity
@@ -27,6 +27,7 @@ Upload one person reference image and one garment image, run several try-on prov
 
 Configured providers:
 
+- Open-source Hugging Face / Gradio virtual try-on provider for the first free remote test
 - FASHN Try-On / Try-On Max for the main try-on result
 - Replicate IDM-VTON for an affordable non-commercial benchmark
 - OpenAI image generation/editing for light beautification and editorial output
@@ -40,10 +41,14 @@ cp .env.example .env
 Then fill:
 
 ```bash
+HF_VTON_SPACE=fashn-ai/fashn-vton-1.5
+HF_VTON_API_NAME=/try_on
 FASHN_API_KEY=
 REPLICATE_API_TOKEN=
 OPENAI_API_KEY=
 ```
+
+Deployment steps live in `docs/deployment.md`.
 
 ## Provider Interface
 
