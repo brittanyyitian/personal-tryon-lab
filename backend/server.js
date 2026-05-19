@@ -2,7 +2,7 @@ const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
 const { keyStatus, loadEnv } = require("./config");
-const { runProvider } = require("./providers");
+const { runTryonJob } = require("./tryon-handler");
 
 loadEnv();
 
@@ -35,7 +35,7 @@ const server = http.createServer(async (request, response) => {
 
     if (url.pathname === "/api/tryon" && request.method === "POST") {
       const payload = await readJsonBody(request);
-      const result = await runProvider(payload.providerId, payload);
+      const result = await runTryonJob(payload);
       sendJson(response, 200, result);
       return;
     }

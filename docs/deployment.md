@@ -38,6 +38,10 @@ Output Directory: leave empty
 ```text
 HF_VTON_SPACE=fashn-ai/fashn-vton-1.5
 HF_VTON_API_NAME=/try_on
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_JOB_TABLE=tryon_jobs
+SUPABASE_RESULT_BUCKET=tryon-results
 ```
 
 Optional paid/API providers:
@@ -65,6 +69,32 @@ GET /api/jobs/:id -> poll result
 ```
 
 That job queue flow should be added when Supabase is introduced.
+
+## Supabase Setup
+
+Supabase is optional for local tests, but recommended for deployed tests because it records every generation attempt.
+
+1. Create a Supabase project.
+2. Open `SQL Editor`.
+3. Paste and run `supabase/schema.sql`.
+4. Open `Project Settings` -> `API`.
+5. Copy these values into Vercel environment variables:
+
+```text
+SUPABASE_URL=<Project URL>
+SUPABASE_SERVICE_ROLE_KEY=<service_role key>
+```
+
+Use the service role key only on the server side. Do not expose it in frontend code.
+
+The current integration stores:
+
+- one `tryon_jobs` row per generation
+- status: `running`, `succeeded`, or `failed`
+- provider, mode, item type, garment source
+- generated result image data URL and private Storage path when available
+
+The current integration does not yet add user login or per-user asset libraries. That should come next with Supabase Auth and private Storage paths.
 
 ## Option B: Render
 

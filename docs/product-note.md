@@ -6,6 +6,8 @@ The project is split into:
 
 - `frontend/src`: the minimal browser UI
 - `backend`: the local Node server and remote provider proxy
+- `api`: Vercel API Functions
+- `supabase/schema.sql`: database and Storage setup for deployed generation logs
 
 ## Local-Only Privacy Rule
 
@@ -46,9 +48,21 @@ HF_VTON_API_NAME=/try_on
 FASHN_API_KEY=
 REPLICATE_API_TOKEN=
 OPENAI_API_KEY=
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
 ```
 
 Deployment steps live in `docs/deployment.md`.
+
+## Vercel + Supabase Flow
+
+The deployed `/api/tryon` function now wraps provider generation in a Supabase job record when Supabase is configured:
+
+```text
+create tryon_jobs row -> run provider -> upload result image if possible -> mark succeeded/failed
+```
+
+If Supabase is not configured, generation still works without persistence.
 
 ## Provider Interface
 
