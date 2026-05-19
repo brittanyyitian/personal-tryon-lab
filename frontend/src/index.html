@@ -55,14 +55,14 @@
             <div class="item-shelf" id="itemShelf" aria-label="Uploaded items"></div>
           </div>
 
-          <button class="settings-button" id="settingsButton" type="button">Remote & correction</button>
+          <button class="settings-button" id="settingsButton" type="button">Correction</button>
 
           <div class="advanced-panel" id="settingsPanel" hidden>
             <div class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
               <div class="settings-header">
                 <div>
                   <p class="eyebrow">Settings</p>
-                  <h2 id="settingsTitle">Remote & correction</h2>
+                  <h2 id="settingsTitle">Correction</h2>
                 </div>
                 <button class="icon-button" id="settingsCloseButton" type="button" aria-label="关闭设置" title="关闭设置">×</button>
               </div>
@@ -93,8 +93,8 @@
             <div class="control-block">
               <span class="control-title">GARMENT SOURCE</span>
               <div class="segment" role="radiogroup" aria-label="衣服图片来源">
-                <label><input type="radio" name="garmentSource" value="flat-lay" checked />Flat-lay</label>
-                <label><input type="radio" name="garmentSource" value="model" />On model</label>
+                <label><input type="radio" name="garmentSource" value="flat-lay" />Flat-lay</label>
+                <label><input type="radio" name="garmentSource" value="model" checked />On model</label>
               </div>
             </div>
 
@@ -109,21 +109,6 @@
               </label>
             </div>
 
-            <div class="remote-panel">
-            <div class="remote-header">
-              <span class="control-title">REMOTE TEST</span>
-              <label class="switch">
-                <input id="remoteToggle" type="checkbox" />
-                <span>On</span>
-              </label>
-            </div>
-            <p class="remote-copy" id="remoteCopy">Off: local mock only. No uploads.</p>
-            <div class="key-status" id="keyStatus"></div>
-            <label class="consent-row">
-              <input id="consentCheckbox" type="checkbox" disabled />
-              <span>I am using non-private test images and understand they will be uploaded.</span>
-            </label>
-            </div>
             <div class="settings-footer">
               <button class="primary-button" id="settingsDoneButton" type="button">Done</button>
             </div>
@@ -132,6 +117,21 @@
 
           <div class="action-row">
             <p class="inline-error" id="formError"></p>
+            <div class="remote-panel inline-remote-panel">
+              <div class="remote-header">
+                <span class="control-title">REMOTE TEST</span>
+                <label class="switch">
+                  <input id="remoteToggle" type="checkbox" checked />
+                  <span>On</span>
+                </label>
+              </div>
+              <p class="remote-copy" id="remoteCopy">On: selected non-private images can be uploaded to enabled providers.</p>
+              <label class="consent-row compact-consent">
+                <input id="consentCheckbox" type="checkbox" checked />
+                <span>Non-private test images. Upload allowed.</span>
+              </label>
+              <div class="key-status" id="keyStatus"></div>
+            </div>
             <button class="primary-button" id="generateButton" type="button">Generate real try-on</button>
           </div>
         </div>

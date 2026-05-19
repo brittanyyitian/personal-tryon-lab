@@ -507,6 +507,13 @@ h2 {
   border-top: 1px solid var(--line);
 }
 
+.inline-remote-panel {
+  margin-top: 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
 .remote-header,
 .switch,
 .consent-row {
@@ -538,10 +545,19 @@ h2 {
   line-height: 1.5;
 }
 
+.inline-remote-panel .remote-copy {
+  margin-bottom: 8px;
+}
+
+.compact-consent {
+  color: var(--ink);
+  font-size: 11px;
+}
+
 .key-status {
   display: grid;
   gap: 6px;
-  margin: 14px 0;
+  margin: 10px 0 0;
 }
 
 .key-status span {

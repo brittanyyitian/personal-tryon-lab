@@ -29,8 +29,8 @@ const state = {
   selectedProviders: new Set(["opensource"]),
   results: [],
   isGenerating: false,
-  remoteEnabled: false,
-  consentAccepted: false,
+  remoteEnabled: true,
+  consentAccepted: true,
   config: {
     keys: {
       opensource: false,
@@ -85,6 +85,8 @@ const elements = {
 
 async function init() {
   await loadConfig();
+  elements.remoteToggle.checked = state.remoteEnabled;
+  elements.consentCheckbox.checked = state.consentAccepted;
   renderProviders();
   bindUpload(elements.personInput, "person");
   bindUpload(elements.garmentInput, "garment");
@@ -210,7 +212,9 @@ function renderProviders() {
 function renderRemoteState() {
   elements.remoteToggle.checked = state.remoteEnabled;
   elements.consentCheckbox.checked = state.consentAccepted;
-  elements.navStatus.textContent = state.remoteEnabled ? "REMOTE TEST" : "LOCAL MODE";
+  if (elements.navStatus) {
+    elements.navStatus.textContent = state.remoteEnabled ? "REMOTE TEST" : "LOCAL MODE";
+  }
   elements.privacyNote.textContent = state.remoteEnabled
     ? "Remote test mode is on. Selected images will be uploaded only after consent and Generate real try-on."
     : "Local mode is active. Images stay in this browser; real try-on is disabled until remote consent is enabled.";
@@ -596,7 +600,7 @@ function inferItemType(fileName) {
 
 function inferGarmentSource(fileName) {
   const name = fileName.toLowerCase();
-  return ["model", "wear", "try", "模特", "上身", "穿"].some((word) => name.includes(word)) ? "model" : "flat-lay";
+  return ["flat", "lay", "product", "hanger", "平铺", "商品图"].some((word) => name.includes(word)) ? "flat-lay" : "model";
 }
 
 function inferPersonLabel(image) {
