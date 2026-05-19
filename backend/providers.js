@@ -218,8 +218,8 @@ async function runOpenSourceVton(payload) {
   const os = require("node:os");
   const path = require("node:path");
 
-  const space = process.env.HF_VTON_SPACE || "ashamsundar/Try-On";
-  const apiName = process.env.HF_VTON_API_NAME || "/try_on_cloth";
+  const space = process.env.HF_VTON_SPACE || "fashn-ai/fashn-vton-1.5";
+  const apiName = process.env.HF_VTON_API_NAME || "/try_on";
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "tryon-hf-"));
   const personPath = path.join(tempDir, "person.png");
   const garmentPath = path.join(tempDir, "garment.png");
@@ -255,6 +255,19 @@ async function runOpenSourceVton(payload) {
 }
 
 function openSourcePayload(apiName, { personPath, garmentPath, handle_file, mode }) {
+  if (apiName === "/try_on") {
+    return {
+      person_image: handle_file(personPath),
+      garment_image: handle_file(garmentPath),
+      category: "tops",
+      garment_photo_type: "auto",
+      num_timesteps: mode === "real" ? 30 : 40,
+      guidance_scale: mode === "editorial" ? 3 : 2.5,
+      seed: 42,
+      segmentation_free: true
+    };
+  }
+
   if (apiName === "/try_on_cloth") {
     return {
       human_image: handle_file(personPath),
