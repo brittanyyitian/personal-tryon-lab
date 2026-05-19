@@ -80,6 +80,7 @@ const elements = {
   caseSection: document.querySelector("#caseSection"),
   resultsSection: document.querySelector("#resultsSection"),
   resultGrid: document.querySelector("#resultGrid"),
+  savedSection: document.querySelector(".saved-section"),
   savedList: document.querySelector("#savedList"),
   toast: document.querySelector("#toast")
 };
@@ -95,6 +96,7 @@ async function init() {
   bindDropzone(elements.garmentDropzone, "garment");
   bindRemoteControls();
   bindSettingsModal();
+  bindBoardUploadPrompts();
   elements.generateButton.addEventListener("click", generateResults);
   elements.resetButton.addEventListener("click", resetRun);
   elements.saveButton.addEventListener("click", saveRun);
@@ -117,6 +119,18 @@ async function init() {
   renderMoodBoard();
   renderAutoSummary();
   renderSavedRuns();
+}
+
+function bindBoardUploadPrompts() {
+  elements.moodBoard.addEventListener("click", (event) => {
+    const personPrompt = event.target.closest("[data-upload-person]");
+    const itemPrompt = event.target.closest("[data-upload-item]");
+    if (personPrompt) {
+      elements.personInput.click();
+    } else if (itemPrompt) {
+      elements.garmentInput.click();
+    }
+  });
 }
 
 function bindSettingsModal() {
@@ -430,7 +444,7 @@ function setActivePerson(personId) {
 function renderPersonStrip() {
   if (state.persons.length === 0) {
     elements.personStrip.innerHTML = `<p class="empty-shelf">No people yet</p>`;
-    elements.personMeta.textContent = "No people yet";
+    elements.personMeta.textContent = "No person yet";
     return;
   }
 
@@ -501,7 +515,7 @@ function updateActiveItemFromControls() {
 function renderItemShelf() {
   if (state.items.length === 0) {
     elements.itemShelf.innerHTML = `<p class="empty-shelf">No items yet</p>`;
-    elements.garmentMeta.textContent = "No items selected";
+    elements.garmentMeta.textContent = "No items yet";
     return;
   }
 
@@ -584,11 +598,48 @@ function removeItem(itemId) {
 function renderMoodBoard() {
   const activePerson = getActivePerson();
   const hasImages = activePerson || state.items.length > 0;
+  elements.moodBoard.classList.toggle("is-empty", !hasImages);
+  elements.moodBoard.classList.toggle("has-images", hasImages);
   applyBoardPalette(activePerson, getActiveItem());
   if (!hasImages) {
     elements.moodBoard.innerHTML = `
-      <div class="board-masthead">
-        <strong>Upload a person and items</strong>
+      <div class="empty-board reference-empty-board">
+        <button class="reference-person" data-upload-person type="button" aria-label="Upload full body person photo">
+          <svg viewBox="0 0 240 520" aria-hidden="true">
+            <path d="M120 36 C138 36 150 50 150 70 C150 92 138 108 120 108 C102 108 90 92 90 70 C90 50 102 36 120 36 M98 132 C108 122 132 122 142 132 C160 150 166 184 166 228 C166 258 162 292 156 340 C152 376 150 420 150 468 M142 132 C132 144 128 170 128 216 C128 264 128 356 128 480 M98 132 C108 144 112 170 112 216 C112 264 112 356 112 480 M98 132 C80 150 74 184 74 228 C74 258 78 292 84 340 C88 376 90 420 90 468 M90 468 C90 486 98 494 110 494 M150 468 C150 486 142 494 130 494"></path>
+          </svg>
+          <strong>Drop a person<br />and outfit pieces</strong>
+          <small>JPG, PNG · Up to 20MB</small>
+          <span class="upload-arrow" aria-hidden="true">
+            <svg viewBox="0 0 80 80">
+              <path d="M18 58C18 42 34 30 48 30C56 30 60 34 62 40"></path>
+              <path d="M56 34L62 40L56 46"></path>
+            </svg>
+          </span>
+        </button>
+        <button class="ghost-item ghost-hat" data-upload-item type="button" aria-label="Upload hat">
+          <svg viewBox="0 0 180 140" aria-hidden="true"><path d="M54 76C54 54 70 42 92 42C114 42 130 54 130 76"></path><path d="M44 82C60 72 84 68 114 70C132 72 146 76 154 82"></path><path d="M92 42V76"></path></svg>
+        </button>
+        <button class="ghost-item ghost-bag" data-upload-item type="button" aria-label="Upload bag">
+          <svg viewBox="0 0 180 180" aria-hidden="true"><path d="M52 74H128V126C128 134 122 140 114 140H66C58 140 52 134 52 126V74Z"></path><path d="M68 74C68 58 76 48 90 48C104 48 112 58 112 74"></path></svg>
+        </button>
+        <button class="ghost-item ghost-shoes" data-upload-item type="button" aria-label="Upload shoes">
+          <svg viewBox="0 0 220 120" aria-hidden="true"><path d="M42 72L82 58L110 70L146 72L172 82L176 92H42V72Z"></path><path d="M60 82H160"></path><path d="M88 66L98 76M102 66L112 76M116 66L126 76"></path></svg>
+        </button>
+        <button class="ghost-item ghost-top" data-upload-item type="button" aria-label="Upload top">
+          <svg viewBox="0 0 180 180" aria-hidden="true"><path d="M62 48L78 38H102L118 48L136 60L126 82V132H54V82L44 60L62 48Z"></path><path d="M78 38C82 46 98 46 102 38"></path></svg>
+        </button>
+        <button class="ghost-item ghost-pants" data-upload-item type="button" aria-label="Upload pants">
+          <svg viewBox="0 0 180 220" aria-hidden="true"><path d="M58 32H122L132 182H98L90 102L82 182H48L58 32Z"></path><path d="M74 44H106"></path></svg>
+        </button>
+        <div class="privacy-lock" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <rect x="7" y="10" width="10" height="8" rx="1.5"></rect>
+            <path d="M9 10V8C9 5.8 10.2 4.5 12 4.5C13.8 4.5 15 5.8 15 8V10"></path>
+            <path d="M12 13.2V14.8"></path>
+          </svg>
+          <span>Use non-private test images for remote generation.</span>
+        </div>
       </div>
     `;
     return;
@@ -739,11 +790,22 @@ function renderAutoSummary() {
   const activePerson = getActivePerson();
   const activeItem = getActiveItem();
   const hasBoth = Boolean(activePerson && activeItem);
+  elements.settingsButton.hidden = !activeItem;
+  elements.generateButton.hidden = !hasBoth;
+  elements.itemShelf.hidden = state.items.length === 0;
+  elements.autoTitle.hidden = false;
+  elements.autoSummary.hidden = false;
+  elements.caseSection.hidden = true;
 
   if (!hasBoth) {
-    elements.autoTitle.textContent = "Add images";
+    elements.autoTitle.hidden = false;
+    elements.autoSummary.hidden = false;
+    elements.autoTitle.textContent = "NO ITEMS YET";
     elements.autoSummary.innerHTML = `
-      <p>${state.persons.length ? "Person selected." : "Upload a person."} ${state.items.length ? "Items identified." : "Upload one or more items."}</p>
+      <div class="empty-sidebar-icon" aria-hidden="true">
+        <svg viewBox="0 0 48 48"><path d="M11 22h26l-5 16H16Z"></path><path d="M16 22l4-8h12l5 8"></path><path d="M18 29h12"></path></svg>
+      </div>
+      <p>Upload clothing, shoes,<br />bags, hats and more.<br />They will appear here.</p>
     `;
     return;
   }
@@ -1129,7 +1191,7 @@ function modeLabel(mode) {
 
 function renderResults() {
   const hasResults = state.results.length > 0;
-  elements.caseSection.hidden = hasResults;
+  elements.caseSection.hidden = true;
   elements.resultsSection.hidden = !hasResults;
   elements.resultGrid.hidden = !hasResults;
 
@@ -1271,6 +1333,7 @@ function getSavedRuns() {
 
 function renderSavedRuns() {
   const savedRuns = getSavedRuns();
+  elements.savedSection.hidden = savedRuns.length === 0;
   if (savedRuns.length === 0) {
     elements.savedList.innerHTML = `<div class="saved-item">No saved studies</div>`;
     return;

@@ -9,38 +9,50 @@
   <body data-theme="minimal">
     <main class="shell">
       <header class="topbar">
-        <div>
-          <h1>Try-on Studio</h1>
-          <p class="subtitle">Upload a person and outfit pieces. We identify the items, arrange them as cutouts, then generate the real try-on.</p>
+        <div class="hero-copy">
+          <p class="brand-kicker">TRY-ON STUDIO</p>
+          <h1>AI Try-On</h1>
+          <p class="subtitle">Upload a person and outfit pieces.<br />We'll generate a realistic try-on.</p>
           <p class="privacy-note" id="privacyNote">Local mode is active. Images stay in this browser unless remote test mode is enabled.</p>
         </div>
+        <section class="upload-dock" aria-label="上传入口">
+          <div class="people-panel">
+            <label class="dropzone compact-dropzone" id="personDropzone">
+              <input id="personInput" type="file" accept="image/png,image/jpeg,image/webp" multiple />
+              <span class="upload-icon" aria-hidden="true">
+                <svg viewBox="0 0 40 40">
+                  <circle cx="20" cy="14" r="5"></circle>
+                  <path d="M10 30C10 24 14 21 20 21C26 21 30 24 30 30"></path>
+                </svg>
+              </span>
+              <span class="dropzone-label">Upload person</span>
+              <span class="upload-meta" id="personMeta">No person yet</span>
+              <img id="personPreview" alt="" hidden />
+              <span class="dropzone-error" id="personError"></span>
+            </label>
+            <div class="person-strip" id="personStrip" aria-label="Uploaded people"></div>
+          </div>
+
+          <div class="mood-board-panel upload-panel">
+            <label class="dropzone item-dropzone mood-dropzone" id="garmentDropzone">
+              <input id="garmentInput" type="file" accept="image/png,image/jpeg,image/webp" multiple />
+              <span class="upload-icon" aria-hidden="true">
+                <svg viewBox="0 0 40 40">
+                  <path d="M20 10C20 8 22 8 22 10C22 12 18 12 18 16"></path>
+                  <path d="M10 24L20 18L30 24"></path>
+                </svg>
+              </span>
+              <span class="dropzone-label">Upload items</span>
+              <span class="upload-meta" id="garmentMeta">No items yet</span>
+              <img id="garmentPreview" alt="" hidden />
+              <span class="dropzone-error" id="garmentError"></span>
+            </label>
+          </div>
+        </section>
         <button class="icon-button" id="resetButton" type="button" aria-label="重置本次测试" title="重置本次测试">
-          ↻
+          ?
         </button>
       </header>
-
-      <section class="upload-dock" aria-label="上传入口">
-        <div class="people-panel">
-          <label class="dropzone compact-dropzone" id="personDropzone">
-            <input id="personInput" type="file" accept="image/png,image/jpeg,image/webp" multiple />
-            <span class="dropzone-label">Upload person</span>
-            <span class="upload-meta" id="personMeta">No people yet</span>
-            <img id="personPreview" alt="" hidden />
-            <span class="dropzone-error" id="personError"></span>
-          </label>
-          <div class="person-strip" id="personStrip" aria-label="Uploaded people"></div>
-        </div>
-
-        <div class="mood-board-panel upload-panel">
-          <label class="dropzone item-dropzone mood-dropzone" id="garmentDropzone">
-            <input id="garmentInput" type="file" accept="image/png,image/jpeg,image/webp" multiple />
-            <span class="dropzone-label">Upload items</span>
-            <span class="upload-meta" id="garmentMeta">No items yet</span>
-            <img id="garmentPreview" alt="" hidden />
-            <span class="dropzone-error" id="garmentError"></span>
-          </label>
-        </div>
-      </section>
 
       <section class="workspace mood-workspace" aria-label="试穿输入">
         <div class="mood-board-panel">
@@ -136,6 +148,8 @@
           </div>
         </div>
       </section>
+
+      <p class="studio-tip">Tip: Use a full-body photo with a clean background for best results.</p>
 
       <section class="case-section" id="caseSection" aria-label="Case study">
         <div>
