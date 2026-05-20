@@ -11,10 +11,16 @@ module.exports = function handler(request, response) {
 
   const supabaseUrl = process.env.SUPABASE_URL || "";
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  const classifierModels = process.env.HF_ITEM_CLASSIFIER_MODELS || process.env.HF_ITEM_CLASSIFIER_MODEL || "patrickjohncyh/fashion-clip,Marqo/marqo-fashionCLIP,openai/clip-vit-large-patch14";
 
   sendJson(response, 200, {
     remoteAvailable: true,
     keys: keyStatus(),
+    itemClassifier: {
+      remoteEnabled: Boolean(process.env.HF_TOKEN || process.env.HF_CLASSIFIER_REMOTE === "true"),
+      hasHfToken: Boolean(process.env.HF_TOKEN),
+      models: classifierModels.split(",").map((model) => model.trim()).filter(Boolean)
+    },
     supabase: {
       enabled: Boolean(supabaseUrl && serviceRoleKey),
       hasUrl: Boolean(supabaseUrl),

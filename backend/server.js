@@ -27,9 +27,15 @@ const server = http.createServer(async (request, response) => {
     const url = new URL(request.url, `http://${request.headers.host}`);
 
     if (url.pathname === "/api/config" && request.method === "GET") {
+      const classifierModels = process.env.HF_ITEM_CLASSIFIER_MODELS || process.env.HF_ITEM_CLASSIFIER_MODEL || "patrickjohncyh/fashion-clip,Marqo/marqo-fashionCLIP,openai/clip-vit-large-patch14";
       sendJson(response, 200, {
         remoteAvailable: true,
-        keys: keyStatus()
+        keys: keyStatus(),
+        itemClassifier: {
+          remoteEnabled: Boolean(process.env.HF_TOKEN || process.env.HF_CLASSIFIER_REMOTE === "true"),
+          hasHfToken: Boolean(process.env.HF_TOKEN),
+          models: classifierModels.split(",").map((model) => model.trim()).filter(Boolean)
+        }
       });
       return;
     }

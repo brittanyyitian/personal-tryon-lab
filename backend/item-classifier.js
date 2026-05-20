@@ -10,6 +10,22 @@ const LABELS = {
   hat: "Hat"
 };
 
+const DEFAULT_REMOTE_MODELS = [
+  "patrickjohncyh/fashion-clip",
+  "Marqo/marqo-fashionCLIP",
+  "openai/clip-vit-large-patch14"
+];
+
+const ZERO_SHOT_LABELS = [
+  "a product photo of a top, shirt, blouse, sweater, jacket, or coat",
+  "a product photo of pants, trousers, jeans, shorts, leggings, or cargo pants",
+  "a product photo of a skirt",
+  "a product photo of a dress",
+  "a product photo of shoes, sneakers, boots, sandals, or heels",
+  "a product photo of a bag, handbag, purse, tote, backpack, or clutch",
+  "a product photo of a hat, cap, beanie, or bucket hat"
+];
+
 async function classifyItemImage(payload) {
   const image = payload.image || "";
   assertImageData(image);
@@ -30,17 +46,18 @@ async function classifyWithHuggingFace(image) {
     return null;
   }
 
-  const model = process.env.HF_ITEM_CLASSIFIER_MODEL || "openai/clip-vit-large-patch14";
-  const labels = [
-    "shirt, blouse, jacket, sweater, coat, or top",
-    "pants, trousers, jeans, or shorts",
-    "skirt",
-    "dress",
-    "shoes, sneakers, boots, or sandals",
-    "bag, purse, handbag, or backpack",
-    "hat or cap"
-  ];
-  const response = await fetchWithTimeout(`https://api-inference.huggingface.co/models/${model}`, {
+  for (const model of classifierModels()) {
+    const result = await classifyWithHuggingFaceModel(model, image).catch(() => null);
+    if (result?.type) {
+      return result;
+    }
+  }
+
+  return null;
+}
+
+async function classifyWithHuggingFaceModel(model, image) {
+  const response = await fetchWithTimeout(`${classifierBaseUrl()}/${model}`, {
     method: "POST",
     headers: {
       ...(process.env.HF_TOKEN ? { Authorization: `Bearer ${process.env.HF_TOKEN}` } : {}),
@@ -49,17 +66,20 @@ async function classifyWithHuggingFace(image) {
     body: JSON.stringify({
       inputs: image,
       parameters: {
-        candidate_labels: labels
+        candidate_labels: ZERO_SHOT_LABELS
+      },
+      options: {
+        wait_for_model: true
       }
     })
-  }, 8000);
+  }, Number(process.env.HF_ITEM_CLASSIFIER_TIMEOUT_MS || 12000));
   if (!response.ok) {
     return null;
   }
 
   const data = await response.json().catch(() => null);
-  const winner = Array.isArray(data) ? data[0] : data?.labels?.[0] ? { label: data.labels[0], score: data.scores?.[0] } : null;
-  const index = labels.findIndex((label) => label === winner?.label);
+  const winner = normalizeZeroShotWinner(data);
+  const index = ZERO_SHOT_LABELS.findIndex((label) => label === winner?.label);
   const type = ITEM_TYPES[index];
   if (!type) {
     return null;
@@ -69,8 +89,37 @@ async function classifyWithHuggingFace(image) {
     type,
     label: LABELS[type],
     confidence: Number(winner.score || 0),
-    source: "hf-zero-shot"
+    source: model.includes("fashion") ? "fashionclip" : "clip"
   };
+}
+
+function classifierModels() {
+  const configured = process.env.HF_ITEM_CLASSIFIER_MODELS || process.env.HF_ITEM_CLASSIFIER_MODEL || "";
+  return (configured ? configured.split(",") : DEFAULT_REMOTE_MODELS)
+    .map((model) => model.trim())
+    .filter(Boolean);
+}
+
+function classifierBaseUrl() {
+  return (process.env.HF_ITEM_CLASSIFIER_BASE_URL || "https://api-inference.huggingface.co/models").replace(/\/+$/, "");
+}
+
+function normalizeZeroShotWinner(data) {
+  if (!data) {
+    return null;
+  }
+  if (Array.isArray(data)) {
+    return data
+      .filter((item) => item && typeof item === "object")
+      .sort((a, b) => Number(b.score || 0) - Number(a.score || 0))[0] || null;
+  }
+  if (Array.isArray(data.labels)) {
+    return {
+      label: data.labels[0],
+      score: data.scores?.[0]
+    };
+  }
+  return null;
 }
 
 function classifyWithLocalHints({ fileName, image }) {

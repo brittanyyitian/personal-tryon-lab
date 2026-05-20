@@ -38,11 +38,15 @@ Output Directory: leave empty
 ```text
 HF_VTON_SPACE=fashn-ai/fashn-vton-1.5
 HF_VTON_API_NAME=/try_on
+HF_TOKEN=
+HF_ITEM_CLASSIFIER_MODELS=patrickjohncyh/fashion-clip,Marqo/marqo-fashionCLIP,openai/clip-vit-large-patch14
 SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_JOB_TABLE=tryon_jobs
 SUPABASE_RESULT_BUCKET=tryon-results
 ```
+
+`HF_TOKEN` enables remote visual item classification before try-on. Without it, item type detection falls back to filename and image-shape hints, and the user can still manually correct the type in the UI.
 
 Optional paid/API providers:
 
