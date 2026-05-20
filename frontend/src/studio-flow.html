@@ -528,6 +528,50 @@
         cursor: pointer;
       }
 
+      .generation-mode {
+        display: grid;
+        gap: 8px;
+        margin-top: 18px;
+      }
+
+      .mode-option {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 18px 1fr;
+        gap: 10px;
+        align-items: start;
+        padding: 14px 12px;
+        border: 1px solid rgba(16, 16, 16, 0.16);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.42);
+        cursor: pointer;
+      }
+
+      .mode-option input {
+        margin: 2px 0 0;
+        accent-color: var(--ink);
+      }
+
+      .mode-option strong,
+      .mode-option small {
+        display: block;
+        text-transform: uppercase;
+      }
+
+      .mode-option strong {
+        margin-bottom: 4px;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+      }
+
+      .mode-option small {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 900;
+        line-height: 1.45;
+      }
+
       .remove-button {
         width: 28px;
         height: 28px;
@@ -741,6 +785,7 @@
         results: [],
         resultError: "",
         generatingIndex: 0,
+        generationMode: "look",
         done: {
           person: false,
           items: false,
@@ -848,7 +893,7 @@
               <div class="generation-card">
                 <span class="spinner"></span>
                 <strong>Generating try-on</strong>
-                <span>${state.generatingIndex} / ${state.items.length}</span>
+                <span>${generationProgressCopy()}</span>
               </div>
             </div>
           ` : ""}
@@ -878,6 +923,13 @@
             </div>
           ` : ""}
         `;
+      }
+
+      function generationProgressCopy() {
+        if (state.generationMode === "look") {
+          return "1 complete look";
+        }
+        return `${state.generatingIndex} / ${state.items.length}`;
       }
 
       function renderSidePanel() {
@@ -920,6 +972,35 @@
         if (!state.items.length) {
           return;
         }
+
+        panel.insertAdjacentHTML("beforeend", `
+          <div class="generation-mode" role="radiogroup" aria-label="Generation mode">
+            <label class="mode-option">
+              <input type="radio" name="generationMode" value="look" ${state.generationMode === "look" ? "checked" : ""} />
+              <span>
+                <strong>Complete look</strong>
+                <small>Generate one look from the main garment</small>
+              </span>
+            </label>
+            <label class="mode-option">
+              <input type="radio" name="generationMode" value="separate" ${state.generationMode === "separate" ? "checked" : ""} />
+              <span>
+                <strong>Separate tests</strong>
+                <small>Generate one study per item</small>
+              </span>
+            </label>
+          </div>
+        `);
+
+        panel.querySelectorAll("input[name='generationMode']").forEach((input) => {
+          input.addEventListener("change", () => {
+            state.generationMode = input.value;
+            state.resultStatus = "idle";
+            state.results = [];
+            state.done.generate = false;
+            render();
+          });
+        });
 
         state.items.forEach((item, index) => {
           panel.insertAdjacentHTML("beforeend", `
@@ -1101,7 +1182,16 @@
         render();
 
         const failures = [];
-        for (const [index, item] of state.items.entries()) {
+        const generationItems = state.generationMode === "look" ? selectLookItems() : state.items;
+        if (!generationItems.length) {
+          state.resultStatus = "error";
+          state.resultError = "No supported garment item found. Shoes, bags, and hats need a styled-image provider later.";
+          state.done.generate = false;
+          render();
+          return;
+        }
+
+        for (const [index, item] of generationItems.entries()) {
           state.generatingIndex = index + 1;
           render();
           try {
@@ -1127,9 +1217,12 @@
               throw new Error(data.error || "Remote generation failed.");
             }
             state.results.push({
-              itemName: item.name,
+              itemName: state.generationMode === "look" ? lookResultName(generationItems) : item.name,
               imageUrl: data.imageUrl
             });
+            if (state.generationMode === "look") {
+              break;
+            }
           } catch (error) {
             failures.push(`${item.name}: ${error.message || "Generation failed."}`);
           }
@@ -1144,6 +1237,19 @@
           state.done.generate = false;
         }
         render();
+      }
+
+      function selectLookItems() {
+        const priority = ["dress", "top", "pants", "skirt"];
+        return [...state.items]
+          .filter((item) => priority.includes(item.itemType))
+          .sort((a, b) => priority.indexOf(a.itemType) - priority.indexOf(b.itemType))
+          .slice(0, 1);
+      }
+
+      function lookResultName(items) {
+        const names = items.map((item) => displayItemType(item.itemType)).join(" + ");
+        return names ? `Complete look · ${names}` : "Complete look";
       }
 
       document.querySelectorAll("[data-step]").forEach((button) => {
