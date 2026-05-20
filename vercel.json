@@ -18,7 +18,11 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/frontend/src/index.html"
+      "destination": "/frontend/src/studio-flow.html"
+    },
+    {
+      "source": "/studio-flow.html",
+      "destination": "/frontend/src/studio-flow.html"
     },
     {
       "source": "/styles.css",

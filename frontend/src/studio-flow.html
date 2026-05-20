@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Try-On Studio Flow Concept</title>
+    <link rel="preload" as="image" href="./assets/empty-board-reference.jpg" fetchpriority="high" />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #fbfaf8;
+        --ink: #101010;
+        --muted: #75716b;
+        --soft: #f0eeea;
+        --line: rgba(16, 16, 16, 0.13);
+        --line-strong: rgba(16, 16, 16, 0.36);
+        --display: "Didot", "Bodoni 72", "Times New Roman", serif;
+        --text: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 78% 8%, rgba(255, 255, 255, 0.9), transparent 34%),
+          var(--bg);
+        color: var(--ink);
+        font-family: var(--text);
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .shell {
+        width: min(1480px, calc(100vw - 72px));
+        min-height: 100vh;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 270px minmax(0, 1fr) 310px;
+        gap: 34px;
+        padding: 38px 0 34px;
+      }
+
+      .rail {
+        min-height: calc(100vh - 72px);
+        display: flex;
+        flex-direction: column;
+        padding-right: 30px;
+      }
+
+      .brand-kicker {
+        margin: 0 0 42px;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+      }
+
+      .steps {
+        display: grid;
+        gap: 14px;
+      }
+
+      .step {
+        position: relative;
+        width: 100%;
+        min-height: 116px;
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr);
+        gap: 15px;
+        align-items: start;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        background: transparent;
+        padding: 18px 18px 18px 0;
+        color: #aaa59d;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .step.active {
+        border-color: var(--line-strong);
+        background: rgba(255, 255, 255, 0.48);
+        color: var(--ink);
+        padding-left: 14px;
+      }
+
+      .step.done {
+        color: var(--ink);
+      }
+
+      .step.done::after {
+        content: "✓";
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 22px;
+        height: 22px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--ink);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .step b {
+        font-family: var(--display);
+        font-size: 34px;
+        font-weight: 400;
+        line-height: 0.92;
+      }
+
+      .step strong {
+        display: block;
+        margin-top: 3px;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+
+      .step span span {
+        display: block;
+        max-width: 170px;
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .rail-note {
+        margin: 34px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .rail-action {
+        margin-top: auto;
+        padding-top: 24px;
+        border-top: 1px solid var(--line);
+      }
+
+      .next-button {
+        width: 100%;
+        min-height: 56px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--ink);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .next-button:disabled {
+        background: #d8d4cc;
+        color: #8b877f;
+        cursor: not-allowed;
+      }
+
+      .progress-copy {
+        margin: 12px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .main {
+        min-width: 0;
+      }
+
+      .header {
+        padding-bottom: 28px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      h1 {
+        margin: 0;
+        font-family: var(--display);
+        font-size: clamp(82px, 7.3vw, 116px);
+        font-weight: 400;
+        letter-spacing: -0.04em;
+        line-height: 0.9;
+      }
+
+      .subtitle {
+        margin: 16px 0 0;
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.45;
+      }
+
+      .stage-title {
+        margin: 26px 0 14px;
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 24px;
+      }
+
+      .stage-title h2 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .stage-title span {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .board {
+        position: relative;
+        aspect-ratio: 3 / 2;
+        overflow: hidden;
+        border: 0;
+        border-radius: 22px;
+        background: transparent;
+      }
+
+      .board.empty {
+        cursor: pointer;
+      }
+
+      .empty-board-image {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        user-select: none;
+      }
+
+      .empty-action {
+        position: absolute;
+        right: 26px;
+        bottom: 22px;
+        left: 26px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+        pointer-events: none;
+      }
+
+      .empty-action span {
+        color: rgba(16, 16, 16, 0.48);
+        font-size: 12px;
+      }
+
+      .empty-action strong {
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .board-masthead {
+        position: absolute;
+        top: 28px;
+        left: 32px;
+        z-index: 6;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+
+      .paper-person,
+      .paper-item {
+        position: absolute;
+        border: 0;
+        background: transparent;
+        color: var(--ink);
+      }
+
+      .paper-person {
+        left: 50%;
+        bottom: 8%;
+        z-index: 3;
+        width: min(42%, 390px);
+        padding: 0;
+        transform: translateX(-50%) rotate(-1.2deg);
+      }
+
+      .paper-person img {
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        object-fit: cover;
+        border: 10px solid #fff;
+        clip-path: polygon(8% 0, 92% 3%, 100% 92%, 52% 100%, 8% 94%, 0 16%);
+        box-shadow: 0 18px 38px rgba(0, 0, 0, 0.1);
+        filter: grayscale(0.08) contrast(1.04);
+      }
+
+      .paper-cutout {
+        position: absolute;
+        inset: -18px -20px -22px;
+        z-index: -1;
+        background: #fff;
+        clip-path: polygon(12% 0, 88% 1%, 100% 92%, 53% 100%, 10% 96%, 0 15%);
+        filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.08));
+      }
+
+      .paper-person span,
+      .paper-label {
+        display: inline-flex;
+        max-width: 100%;
+        margin-top: 8px;
+        padding: 7px 10px;
+        background: #fff;
+        color: var(--ink);
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .paper-item-layer {
+        position: absolute;
+        inset: 0;
+      }
+
+      .paper-item {
+        width: 142px;
+        min-height: 166px;
+        padding: 8px;
+        transition: transform 160ms ease;
+      }
+
+      .paper-item img {
+        display: block;
+        width: 100%;
+        height: 106px;
+        object-fit: contain;
+        background: #fff;
+        clip-path: polygon(6% 0, 95% 4%, 100% 90%, 9% 100%, 0 13%);
+        padding: 10px;
+      }
+
+      .item-number {
+        display: block;
+        width: max-content;
+        margin: 0 0 5px;
+        padding: 0 7px;
+        background: #fff;
+        font-family: var(--display);
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .paper-label {
+        font-size: 11px;
+        line-height: 1.15;
+      }
+
+      .paper-item.active,
+      .paper-item:hover {
+        transform: rotate(0deg) scale(1.03);
+      }
+
+      .pin-dot {
+        position: absolute;
+        top: 6px;
+        left: 50%;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--ink);
+        box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.75), 0 6px 13px rgba(0, 0, 0, 0.26);
+      }
+
+      .paper-item-1 {
+        top: 18%;
+        right: 10%;
+        transform: rotate(2deg);
+      }
+
+      .paper-item-2 {
+        top: 43%;
+        right: 8%;
+        transform: rotate(-2deg);
+      }
+
+      .paper-item-3 {
+        top: 22%;
+        left: 9%;
+        transform: rotate(-2deg);
+      }
+
+      .paper-item-4 {
+        right: 11%;
+        bottom: 12%;
+        transform: rotate(2deg);
+      }
+
+      .paper-item-5 {
+        top: 50%;
+        left: 10%;
+        transform: rotate(1deg);
+      }
+
+      .tip {
+        margin: 0;
+        padding-top: 22px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .side {
+        min-width: 0;
+        padding-top: 157px;
+      }
+
+      .side.is-empty {
+        visibility: hidden;
+      }
+
+      .side-section {
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 28px;
+        margin-bottom: 28px;
+      }
+
+      .side h3 {
+        margin: 0 0 18px;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .side p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .item-card {
+        position: relative;
+        display: grid;
+        grid-template-columns: 36px 70px 1fr 28px;
+        gap: 12px;
+        align-items: center;
+        min-height: 116px;
+        margin-top: 28px;
+        padding: 16px 12px;
+        background: #efefec;
+      }
+
+      .add-item-card {
+        width: 100%;
+        min-height: 86px;
+        display: grid;
+        grid-template-columns: 36px 70px 1fr;
+        gap: 12px;
+        align-items: center;
+        margin-top: 24px;
+        padding: 14px 12px;
+        border: 1px dashed rgba(16, 16, 16, 0.24);
+        background: rgba(255, 255, 255, 0.45);
+        color: var(--ink);
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .add-item-card span:first-child {
+        font-family: var(--display);
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .add-item-icon {
+        width: 70px;
+        height: 70px;
+        display: grid;
+        place-items: center;
+        background: #fff;
+        color: var(--muted);
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .item-card-number {
+        font-family: var(--display);
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .item-card img {
+        width: 70px;
+        height: 70px;
+        object-fit: contain;
+        background: #fff;
+        padding: 8px;
+      }
+
+      .item-card strong,
+      .item-card small,
+      .add-item-card strong,
+      .add-item-card small {
+        display: block;
+        text-transform: uppercase;
+      }
+
+      .item-card strong,
+      .add-item-card strong {
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .item-card small,
+      .add-item-card small {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 900;
+        line-height: 1.45;
+      }
+
+      .remove-button {
+        width: 28px;
+        height: 28px;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        background: transparent;
+        font-size: 22px;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      .upload-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      @media (max-width: 1180px) {
+        .shell {
+          grid-template-columns: 240px minmax(0, 1fr);
+        }
+
+        .side {
+          grid-column: 2;
+          padding-top: 0;
+        }
+      }
+
+      @media (max-width: 860px) {
+        .shell {
+          width: min(100vw - 32px, 680px);
+          grid-template-columns: 1fr;
+        }
+
+        .rail {
+          min-height: 0;
+          border-bottom: 1px solid var(--line);
+          padding: 0 0 28px;
+        }
+
+        .side {
+          grid-column: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell" id="shell">
+      <aside class="rail">
+        <p class="brand-kicker">TRY-ON STUDIO</p>
+        <nav class="steps" aria-label="Try-on steps">
+          <button class="step active" type="button" data-step="person">
+            <b>01</b>
+            <span><strong>Person</strong><span>Upload the full-body body reference first.</span></span>
+          </button>
+          <button class="step" type="button" data-step="items">
+            <b>02</b>
+            <span><strong>Items</strong><span>Add garments, shoes, bags, and accessories.</span></span>
+          </button>
+          <button class="step" type="button" data-step="generate">
+            <b>03</b>
+            <span><strong>Generate</strong><span>Review the look and run the try-on.</span></span>
+          </button>
+        </nav>
+        <p class="rail-note">One step, one decision. The next action unlocks only after this step has a usable image.</p>
+        <div class="rail-action">
+          <button class="next-button" id="nextButton" type="button" disabled>Next step</button>
+          <p class="progress-copy" id="progressCopy">Upload a person to begin.</p>
+        </div>
+      </aside>
+
+      <section class="main">
+        <header class="header">
+          <h1>AI Try-On</h1>
+          <p class="subtitle">Upload a person and outfit pieces.<br />We'll generate a realistic try-on.</p>
+        </header>
+
+        <div class="stage-title">
+          <h2 id="stageTitle">Person Reference</h2>
+          <span id="stageStatus">Waiting for upload</span>
+        </div>
+
+        <section class="board empty" id="board" aria-label="Try-on board">
+          <img class="empty-board-image" src="./assets/empty-board-reference.jpg" alt="Drop a person and outfit pieces" />
+          <span class="empty-action">
+            <span id="boardHint">Step 1 · Upload person</span>
+            <strong id="boardAction">Click to add person</strong>
+          </span>
+        </section>
+
+        <p class="tip">Tip: Use a full-body photo with a clean background for best results.</p>
+      </section>
+
+      <aside class="side is-empty" id="sidePanel">
+        <section class="side-section" id="itemPanel">
+          <h3 id="itemPanelTitle">Start with photos</h3>
+          <p id="itemPanelCopy">Upload a full-body person photo first. Outfit pieces will appear here after step 2.</p>
+        </section>
+      </aside>
+    </main>
+
+    <input class="upload-input" id="personInput" type="file" accept="image/*" />
+    <input class="upload-input" id="itemsInput" type="file" accept="image/*" multiple />
+
+    <script>
+      const steps = ["person", "items", "generate"];
+      const state = {
+        current: "person",
+        person: null,
+        items: [],
+        done: {
+          person: false,
+          items: false,
+          generate: false
+        }
+      };
+
+      const copy = {
+        person: {
+          title: "Person Reference",
+          status: "Waiting for upload",
+          done: "Person ready",
+          hint: "Step 1 · Upload person",
+          action: "Click to add person",
+          progress: "Upload a person to begin."
+        },
+        items: {
+          title: "Outfit Pieces",
+          status: "Waiting for items",
+          done: "Items ready",
+          hint: "Step 2 · Add items",
+          action: "Click to add items",
+          progress: "Upload one or more product images."
+        },
+        generate: {
+          title: "Generate",
+          status: "Ready to generate",
+          done: "Ready to generate",
+          hint: "Step 3 · Review look",
+          action: "Review selection",
+          progress: "Everything is ready. Generate is the final action."
+        }
+      };
+
+      const board = document.querySelector("#board");
+      const sidePanel = document.querySelector("#sidePanel");
+      const nextButton = document.querySelector("#nextButton");
+      const personInput = document.querySelector("#personInput");
+      const itemsInput = document.querySelector("#itemsInput");
+
+      function fileToUrl(file) {
+        return URL.createObjectURL(file);
+      }
+
+      function itemTypeLabel() {
+        return state.items.length ? "CHECK ITEM TYPE" : "START WITH PHOTOS";
+      }
+
+      function renderBoard() {
+        if (!state.person) {
+          board.className = "board empty";
+          board.innerHTML = `
+            <img class="empty-board-image" src="./assets/empty-board-reference.jpg" alt="Drop a person and outfit pieces" />
+            <span class="empty-action">
+              <span id="boardHint">${copy[state.current].hint}</span>
+              <strong id="boardAction">${copy[state.current].action}</strong>
+            </span>
+          `;
+          return;
+        }
+
+        const items = state.items
+          .map((item, index) => `
+            <button class="paper-item paper-item-${(index % 5) + 1} ${index === 0 ? "active" : ""}" data-item-index="${index}" type="button">
+              <span class="item-number">${String(index + 1).padStart(2, "0")}</span>
+              <img src="${item.url}" alt="" />
+              <span class="pin-dot"></span>
+              <span class="paper-label">${item.label}</span>
+            </button>
+          `)
+          .join("");
+
+        board.className = "board";
+        board.innerHTML = `
+          <div class="board-masthead"><strong>Selected person</strong></div>
+          <button class="paper-person" type="button" aria-label="Selected person">
+            <span class="paper-cutout"></span>
+            <img src="${state.person.url}" alt="" />
+            <span>Full body · Clear</span>
+          </button>
+          <div class="paper-item-layer">${items}</div>
+        `;
+      }
+
+      function renderSidePanel() {
+        const shouldShowSide = state.current !== "person";
+        sidePanel.classList.toggle("is-empty", !shouldShowSide);
+        if (!shouldShowSide) {
+          return;
+        }
+
+        const title = document.querySelector("#itemPanelTitle");
+        const copyText = document.querySelector("#itemPanelCopy");
+        const panel = document.querySelector("#itemPanel");
+        title.textContent = itemTypeLabel();
+        panel.querySelectorAll(".add-item-card, .item-card").forEach((node) => node.remove());
+        panel.insertAdjacentHTML("beforeend", `
+          <button class="add-item-card" id="addItemCard" type="button">
+            <span>+</span>
+            <span class="add-item-icon">+</span>
+            <span>
+              <strong>Add item</strong>
+              <small>Upload another garment or accessory</small>
+            </span>
+          </button>
+        `);
+        document.querySelector("#addItemCard").addEventListener("click", () => {
+          itemsInput.click();
+        });
+
+        if (!state.items.length) {
+          copyText.textContent = state.person
+            ? "Add clothing, shoes, bags, hats and more. They will appear here."
+            : "Upload a full-body person photo first. Outfit pieces will appear here after step 2.";
+          return;
+        }
+
+        copyText.textContent = "Choose whether this piece is a top, pants, skirt, shoes, bag, or hat before generating.";
+        state.items.forEach((item, index) => {
+          panel.insertAdjacentHTML("beforeend", `
+            <div class="item-card">
+              <span class="item-card-number">${String(index + 1).padStart(2, "0")}</span>
+              <img src="${item.url}" alt="" />
+              <span>
+                <strong>${item.label}</strong>
+                <small>Item · On model<br />${item.name}</small>
+              </span>
+              <button class="remove-button" data-remove-item="${index}" type="button" aria-label="Remove item">×</button>
+            </div>
+          `);
+        });
+        panel.querySelectorAll("[data-remove-item]").forEach((button) => {
+          button.addEventListener("click", () => {
+            state.items.splice(Number(button.dataset.removeItem), 1);
+            state.done.items = state.items.length > 0;
+            if (!state.done.items && state.current !== "person") {
+              state.current = "items";
+            }
+            render();
+          });
+        });
+      }
+
+      function setStep(step) {
+        state.current = step;
+        render();
+      }
+
+      function render() {
+        document.querySelectorAll("[data-step]").forEach((button) => {
+          const name = button.dataset.step;
+          button.classList.toggle("active", name === state.current);
+          button.classList.toggle("done", state.done[name]);
+        });
+
+        document.querySelector("#stageTitle").textContent = copy[state.current].title;
+        document.querySelector("#stageStatus").textContent = state.done[state.current]
+          ? copy[state.current].done
+          : copy[state.current].status;
+        document.querySelector("#progressCopy").textContent = state.done[state.current]
+          ? state.current === "generate" ? copy.generate.progress : "You can continue."
+          : copy[state.current].progress;
+
+        renderBoard();
+        renderSidePanel();
+
+        nextButton.textContent = state.current === "generate" ? "Generate try-on" : "Next step";
+        nextButton.disabled = state.current === "generate"
+          ? !(state.done.person && state.done.items)
+          : !state.done[state.current];
+      }
+
+      board.addEventListener("click", (event) => {
+        if (state.current === "person") {
+          personInput.click();
+          return;
+        }
+        if (state.current === "items") {
+          itemsInput.click();
+        }
+      });
+
+      personInput.addEventListener("change", () => {
+        const [file] = personInput.files;
+        if (!file) {
+          return;
+        }
+        state.person = {
+          name: file.name,
+          url: fileToUrl(file)
+        };
+        state.done.person = true;
+        render();
+      });
+
+      itemsInput.addEventListener("change", () => {
+        const files = Array.from(itemsInput.files);
+        if (!files.length) {
+          return;
+        }
+        state.items.push(...files.map((file) => ({
+          name: file.name,
+          url: fileToUrl(file),
+          label: "CHECK ITEM TYPE"
+        })));
+        state.done.items = true;
+        state.current = "generate";
+        itemsInput.value = "";
+        render();
+      });
+
+      nextButton.addEventListener("click", () => {
+        if (state.current === "generate") {
+          if (!state.done.person || !state.done.items) {
+            return;
+          }
+          nextButton.textContent = "Generating";
+          nextButton.disabled = true;
+          state.done.generate = true;
+          return;
+        }
+        if (!state.done[state.current]) {
+          return;
+        }
+        setStep(steps[steps.indexOf(state.current) + 1]);
+      });
+
+      document.querySelectorAll("[data-step]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const target = button.dataset.step;
+          const targetIndex = steps.indexOf(target);
+          const previousComplete = steps.slice(0, targetIndex).every((step) => state.done[step]);
+          if (targetIndex === 0 || previousComplete) {
+            setStep(target);
+          }
+        });
+      });
+
+      render();
+    </script>
+  </body>
+</html>
