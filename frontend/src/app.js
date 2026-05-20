@@ -604,7 +604,7 @@ function renderMoodBoard() {
   if (!hasImages) {
     elements.moodBoard.innerHTML = `
       <button class="empty-board-image-button" data-upload-person type="button" aria-label="Upload person and outfit pieces">
-        <img class="empty-board-image" src="./assets/empty-board-reference.png" alt="Drop a person and outfit pieces" />
+        <img class="empty-board-image" src="./assets/empty-board-reference.jpg" alt="Drop a person and outfit pieces" fetchpriority="high" decoding="async" />
       </button>
     `;
     return;

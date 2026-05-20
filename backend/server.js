@@ -88,9 +88,10 @@ function serveStatic(url, response) {
     }
 
     const ext = path.extname(filePath).toLowerCase();
+    const isAsset = filePath.includes(`${path.sep}assets${path.sep}`);
     response.writeHead(200, {
       "Content-Type": mimeTypes[ext] || "application/octet-stream",
-      "Cache-Control": "no-store"
+      "Cache-Control": isAsset ? "public, max-age=86400" : "no-store"
     });
     response.end(data);
   });
