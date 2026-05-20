@@ -395,8 +395,12 @@ function setImage(type, file) {
 
 function renderUploadMeta(type, image) {
   const meta = type === "person" ? elements.personMeta : elements.garmentMeta;
-  const megapixels = ((image.analysis.width * image.analysis.height) / 1000000).toFixed(1);
-  meta.textContent = `${image.name} · ${image.analysis.width}x${image.analysis.height} · ${megapixels}MP`;
+  if (type === "person") {
+    meta.textContent = state.persons.length > 1 ? `${state.persons.length} people uploaded` : "Person ready";
+    return;
+  }
+
+  meta.textContent = state.items.length > 1 ? `${state.items.length} items uploaded` : "1 item uploaded";
 }
 
 function createPersonFromImage(image) {
@@ -597,11 +601,11 @@ function removeItem(itemId) {
 
 function renderMoodBoard() {
   const activePerson = getActivePerson();
-  const hasImages = activePerson || state.items.length > 0;
-  elements.moodBoard.classList.toggle("is-empty", !hasImages);
-  elements.moodBoard.classList.toggle("has-images", hasImages);
+  const hasOutfitContext = Boolean(activePerson);
+  elements.moodBoard.classList.toggle("is-empty", !hasOutfitContext);
+  elements.moodBoard.classList.toggle("has-images", hasOutfitContext);
   applyBoardPalette(activePerson, getActiveItem());
-  if (!hasImages) {
+  if (!activePerson) {
     elements.moodBoard.innerHTML = `
       <button class="empty-board-image-button" data-upload-person type="button" aria-label="Upload person and outfit pieces">
         <img class="empty-board-image" src="./assets/empty-board-reference.jpg" alt="Drop a person and outfit pieces" fetchpriority="high" decoding="async" />
@@ -762,15 +766,29 @@ function renderAutoSummary() {
   elements.autoSummary.hidden = false;
   elements.caseSection.hidden = true;
 
-  if (!hasBoth) {
-    elements.autoTitle.hidden = false;
-    elements.autoSummary.hidden = false;
-    elements.autoTitle.textContent = "NO ITEMS YET";
+  if (!activePerson && state.items.length > 0) {
+    elements.autoTitle.textContent = "UPLOAD A PERSON";
+    elements.autoSummary.innerHTML = `
+      <p>${state.items.length} ${state.items.length === 1 ? "item is" : "items are"} ready. Add a full-body person photo to continue.</p>
+    `;
+    return;
+  }
+
+  if (activePerson && !activeItem) {
+    elements.autoTitle.textContent = "ADD OUTFIT PIECES";
+    elements.autoSummary.innerHTML = `
+      <p>Person is ready. Upload clothing, shoes, bags, hats, or other pieces.</p>
+    `;
+    return;
+  }
+
+  if (!activePerson && !activeItem) {
+    elements.autoTitle.textContent = "START WITH PHOTOS";
     elements.autoSummary.innerHTML = `
       <div class="empty-sidebar-icon" aria-hidden="true">
         <svg viewBox="0 0 48 48"><path d="M11 22h26l-5 16H16Z"></path><path d="M16 22l4-8h12l5 8"></path><path d="M18 29h12"></path></svg>
       </div>
-      <p>Upload clothing, shoes,<br />bags, hats and more.<br />They will appear here.</p>
+      <p>Upload a full-body person photo and outfit pieces. They will appear here.</p>
     `;
     return;
   }
