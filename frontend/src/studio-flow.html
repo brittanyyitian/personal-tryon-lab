@@ -534,42 +534,27 @@
         margin-top: 18px;
       }
 
-      .mode-option {
+      .mode-select {
         width: 100%;
-        display: grid;
-        grid-template-columns: 18px 1fr;
-        gap: 10px;
-        align-items: start;
-        padding: 14px 12px;
+        min-height: 52px;
+        padding: 0 14px;
         border: 1px solid rgba(16, 16, 16, 0.16);
         border-radius: 8px;
         background: rgba(255, 255, 255, 0.42);
-        cursor: pointer;
-      }
-
-      .mode-option input {
-        margin: 2px 0 0;
-        accent-color: var(--ink);
-      }
-
-      .mode-option strong,
-      .mode-option small {
-        display: block;
-        text-transform: uppercase;
-      }
-
-      .mode-option strong {
-        margin-bottom: 4px;
+        color: var(--ink);
         font-size: 12px;
         font-weight: 900;
         letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
       }
 
-      .mode-option small {
+      .mode-note {
         color: var(--muted);
         font-size: 10px;
         font-weight: 900;
         line-height: 1.45;
+        text-transform: uppercase;
       }
 
       .remove-button {
@@ -927,16 +912,23 @@
 
       function generationProgressCopy() {
         if (state.generationMode === "look") {
-          return "1 complete look";
+          return `${state.generatingIndex} / ${selectLookItems().length || 1}`;
         }
         return `${state.generatingIndex} / ${state.items.length}`;
+      }
+
+      function generationModeNote() {
+        if (state.generationMode === "look") {
+          return "Layer supported garments into one final result. Accessories are kept as references for now.";
+        }
+        return "Generate a separate study for each uploaded item.";
       }
 
       function renderSidePanel() {
         const title = document.querySelector("#itemPanelTitle");
         const copyText = document.querySelector("#itemPanelCopy");
         const panel = document.querySelector("#itemPanel");
-        panel.querySelectorAll(".upload-card, .item-card").forEach((node) => node.remove());
+        panel.querySelectorAll(".upload-card, .item-card, .generation-mode").forEach((node) => node.remove());
         title.textContent = "";
         copyText.textContent = "";
 
@@ -974,32 +966,21 @@
         }
 
         panel.insertAdjacentHTML("beforeend", `
-          <div class="generation-mode" role="radiogroup" aria-label="Generation mode">
-            <label class="mode-option">
-              <input type="radio" name="generationMode" value="look" ${state.generationMode === "look" ? "checked" : ""} />
-              <span>
-                <strong>Complete look</strong>
-                <small>Generate one look from the main garment</small>
-              </span>
-            </label>
-            <label class="mode-option">
-              <input type="radio" name="generationMode" value="separate" ${state.generationMode === "separate" ? "checked" : ""} />
-              <span>
-                <strong>Separate tests</strong>
-                <small>Generate one study per item</small>
-              </span>
-            </label>
+          <div class="generation-mode">
+            <select class="mode-select" id="generationModeSelect" aria-label="Generation mode">
+              <option value="look" ${state.generationMode === "look" ? "selected" : ""}>Complete look</option>
+              <option value="separate" ${state.generationMode === "separate" ? "selected" : ""}>Separate tests</option>
+            </select>
+            <span class="mode-note" id="generationModeNote">${generationModeNote()}</span>
           </div>
         `);
 
-        panel.querySelectorAll("input[name='generationMode']").forEach((input) => {
-          input.addEventListener("change", () => {
-            state.generationMode = input.value;
-            state.resultStatus = "idle";
-            state.results = [];
-            state.done.generate = false;
-            render();
-          });
+        document.querySelector("#generationModeSelect").addEventListener("change", (event) => {
+          state.generationMode = event.target.value;
+          state.resultStatus = "idle";
+          state.results = [];
+          state.done.generate = false;
+          render();
         });
 
         state.items.forEach((item, index) => {
@@ -1108,7 +1089,8 @@
         }
         const items = await Promise.all(files.map(async (file) => {
           const dataUrl = await fileToDataUrl(file);
-          const classified = await classifyItem(file, dataUrl);
+          const classifierImage = await makeClassifierImage(file, dataUrl);
+          const classified = await classifyItem(file, classifierImage);
           return {
             name: file.name,
             url: fileToUrl(file),
@@ -1159,6 +1141,25 @@
         };
       }
 
+      async function makeClassifierImage(file, fallbackDataUrl) {
+        try {
+          const bitmap = await createImageBitmap(file);
+          const maxSide = 512;
+          const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+          const width = Math.max(1, Math.round(bitmap.width * scale));
+          const height = Math.max(1, Math.round(bitmap.height * scale));
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const context = canvas.getContext("2d");
+          context.drawImage(bitmap, 0, 0, width, height);
+          bitmap.close?.();
+          return canvas.toDataURL("image/jpeg", 0.78);
+        } catch {
+          return fallbackDataUrl;
+        }
+      }
+
       nextButton.addEventListener("click", () => {
         if (state.current === "generate") {
           if (!state.done.person || !state.done.items) {
@@ -1191,41 +1192,10 @@
           return;
         }
 
-        for (const [index, item] of generationItems.entries()) {
-          state.generatingIndex = index + 1;
-          render();
-          try {
-            const response = await fetch("/api/tryon", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                providerId: "opensource",
-                mode: "fit",
-                itemType: item.itemType,
-                garmentSource: item.source,
-                autoNormalize: false,
-                remoteEnabled: true,
-                consentAccepted: true,
-                personImage: state.person.dataUrl,
-                garmentImage: item.dataUrl
-              })
-            });
-            const data = await response.json().catch(() => ({}));
-            if (!response.ok || !data.imageUrl) {
-              throw new Error(data.error || "Remote generation failed.");
-            }
-            state.results.push({
-              itemName: state.generationMode === "look" ? lookResultName(generationItems) : item.name,
-              imageUrl: data.imageUrl
-            });
-            if (state.generationMode === "look") {
-              break;
-            }
-          } catch (error) {
-            failures.push(`${item.name}: ${error.message || "Generation failed."}`);
-          }
+        if (state.generationMode === "look") {
+          await generateCompleteLook(generationItems, failures);
+        } else {
+          await generateSeparateTests(generationItems, failures);
         }
 
         if (state.results.length) {
@@ -1239,12 +1209,79 @@
         render();
       }
 
+      async function generateSeparateTests(generationItems, failures) {
+        for (const [index, item] of generationItems.entries()) {
+          state.generatingIndex = index + 1;
+          render();
+          try {
+            const data = await requestTryOn(item, state.person.dataUrl);
+            state.results.push({
+              itemName: item.name,
+              imageUrl: data.imageUrl
+            });
+          } catch (error) {
+            failures.push(`${item.name}: ${error.message || "Generation failed."}`);
+          }
+        }
+      }
+
+      async function generateCompleteLook(generationItems, failures) {
+        let workingPersonImage = state.person.dataUrl;
+        let finalImage = "";
+        for (const [index, item] of generationItems.entries()) {
+          state.generatingIndex = index + 1;
+          render();
+          try {
+            const data = await requestTryOn(item, workingPersonImage);
+            workingPersonImage = data.imageUrl;
+            finalImage = data.imageUrl;
+          } catch (error) {
+            failures.push(`${item.name}: ${error.message || "Generation failed."}`);
+          }
+        }
+        if (finalImage) {
+          state.results.push({
+            itemName: lookResultName(generationItems),
+            imageUrl: finalImage
+          });
+        }
+      }
+
+      async function requestTryOn(item, personImage) {
+        const response = await fetch("/api/tryon", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            providerId: "opensource",
+            mode: "fit",
+            itemType: item.itemType,
+            garmentSource: item.source,
+            autoNormalize: false,
+            remoteEnabled: true,
+            consentAccepted: true,
+            personImage,
+            garmentImage: item.dataUrl
+          })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || !data.imageUrl) {
+          throw new Error(data.error || "Remote generation failed.");
+        }
+        return data;
+      }
+
       function selectLookItems() {
-        const priority = ["dress", "top", "pants", "skirt"];
-        return [...state.items]
-          .filter((item) => priority.includes(item.itemType))
-          .sort((a, b) => priority.indexOf(a.itemType) - priority.indexOf(b.itemType))
-          .slice(0, 1);
+        const dresses = state.items.filter((item) => item.itemType === "dress");
+        if (dresses.length) {
+          return dresses.slice(0, 1);
+        }
+
+        const priority = ["top", "pants", "skirt"];
+        return priority
+          .map((type) => state.items.find((item) => item.itemType === type))
+          .filter(Boolean);
       }
 
       function lookResultName(items) {
