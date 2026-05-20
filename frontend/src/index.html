@@ -17,38 +17,25 @@
           <p class="privacy-note" id="privacyNote">Local mode is active. Images stay in this browser unless remote test mode is enabled.</p>
         </div>
         <section class="upload-dock" aria-label="上传入口">
-          <div class="people-panel">
-            <label class="dropzone compact-dropzone" id="personDropzone">
-              <input id="personInput" type="file" accept="image/png,image/jpeg,image/webp" multiple />
-              <span class="upload-icon" aria-hidden="true">
-                <svg viewBox="0 0 40 40">
-                  <circle cx="20" cy="14" r="5"></circle>
-                  <path d="M10 30C10 24 14 21 20 21C26 21 30 24 30 30"></path>
-                </svg>
-              </span>
-              <span class="dropzone-label">Upload person</span>
-              <span class="upload-meta" id="personMeta">No person yet</span>
-              <img id="personPreview" alt="" hidden />
-              <span class="dropzone-error" id="personError"></span>
-            </label>
-            <div class="person-strip" id="personStrip" aria-label="Uploaded people"></div>
-          </div>
-
-          <div class="mood-board-panel upload-panel">
-            <label class="dropzone item-dropzone mood-dropzone" id="garmentDropzone">
-              <input id="garmentInput" type="file" accept="image/png,image/jpeg,image/webp" multiple />
-              <span class="upload-icon" aria-hidden="true">
-                <svg viewBox="0 0 40 40">
-                  <path d="M20 10C20 8 22 8 22 10C22 12 18 12 18 16"></path>
-                  <path d="M10 24L20 18L30 24"></path>
-                </svg>
-              </span>
-              <span class="dropzone-label">Upload items</span>
-              <span class="upload-meta" id="garmentMeta">No items yet</span>
-              <img id="garmentPreview" alt="" hidden />
-              <span class="dropzone-error" id="garmentError"></span>
-            </label>
-          </div>
+          <label class="dropzone studio-dropzone" id="studioDropzone">
+            <input id="studioInput" type="file" accept="image/png,image/jpeg,image/webp" multiple />
+            <span class="upload-icon" aria-hidden="true">
+              <svg viewBox="0 0 40 40">
+                <path d="M11 27L20 13L29 27"></path>
+                <path d="M15 23H25"></path>
+                <path d="M20 13V31"></path>
+              </svg>
+            </span>
+            <span class="dropzone-label">Upload photos</span>
+            <span class="upload-meta" id="studioMeta">Person + outfit pieces</span>
+            <span class="dropzone-error" id="studioError"></span>
+          </label>
+          <input id="personInput" class="utility-input" type="file" accept="image/png,image/jpeg,image/webp" multiple />
+          <input id="garmentInput" class="utility-input" type="file" accept="image/png,image/jpeg,image/webp" multiple />
+          <img id="personPreview" alt="" hidden />
+          <img id="garmentPreview" alt="" hidden />
+          <span class="dropzone-error" id="personError"></span>
+          <span class="dropzone-error" id="garmentError"></span>
         </section>
         <button class="icon-button" id="resetButton" type="button" aria-label="重置本次测试" title="重置本次测试">
           ?
@@ -58,7 +45,7 @@
       <section class="workspace mood-workspace" aria-label="试穿输入">
         <div class="mood-board-panel">
           <div class="mood-board is-empty" id="moodBoard" aria-label="AI understood items">
-            <button class="empty-board-image-button" data-upload-person type="button" aria-label="Upload person and outfit pieces">
+            <button class="empty-board-image-button" data-upload-studio type="button" aria-label="Upload person and outfit pieces">
               <img class="empty-board-image" src="./assets/empty-board-reference.jpg" alt="Drop a person and outfit pieces" fetchpriority="high" decoding="async" />
             </button>
           </div>
@@ -69,7 +56,20 @@
             <div class="auto-summary" id="autoSummary">
               Add people and outfit pieces. The board will show what AI understood.
             </div>
-            <div class="item-shelf" id="itemShelf" aria-label="Uploaded items"></div>
+            <div class="session-group">
+              <div class="session-heading">
+                <span>People</span>
+                <button class="inline-add-button" data-add-person type="button">Add</button>
+              </div>
+              <div class="person-strip" id="personStrip" aria-label="Uploaded people"></div>
+            </div>
+            <div class="session-group">
+              <div class="session-heading">
+                <span>Wardrobe</span>
+                <button class="inline-add-button" data-add-item type="button">Add</button>
+              </div>
+              <div class="item-shelf" id="itemShelf" aria-label="Uploaded items"></div>
+            </div>
           </div>
 
           <button class="settings-button" id="settingsButton" type="button" hidden>Correction</button>

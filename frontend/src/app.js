@@ -43,6 +43,10 @@ const state = {
 };
 
 const elements = {
+  studioInput: document.querySelector("#studioInput"),
+  studioDropzone: document.querySelector("#studioDropzone"),
+  studioMeta: document.querySelector("#studioMeta"),
+  studioError: document.querySelector("#studioError"),
   personInput: document.querySelector("#personInput"),
   garmentInput: document.querySelector("#garmentInput"),
   personPreview: document.querySelector("#personPreview"),
@@ -90,8 +94,10 @@ async function init() {
   elements.remoteToggle.checked = state.remoteEnabled;
   elements.consentCheckbox.checked = state.consentAccepted;
   renderProviders();
+  bindUpload(elements.studioInput, "auto");
   bindUpload(elements.personInput, "person");
   bindUpload(elements.garmentInput, "garment");
+  bindDropzone(elements.studioDropzone, "auto");
   bindDropzone(elements.personDropzone, "person");
   bindDropzone(elements.garmentDropzone, "garment");
   bindRemoteControls();
@@ -123,14 +129,39 @@ async function init() {
 
 function bindBoardUploadPrompts() {
   elements.moodBoard.addEventListener("click", (event) => {
+    const studioPrompt = event.target.closest("[data-upload-studio]");
     const personPrompt = event.target.closest("[data-upload-person]");
     const itemPrompt = event.target.closest("[data-upload-item]");
-    if (personPrompt) {
+    if (studioPrompt) {
+      elements.studioInput.click();
+    } else if (personPrompt) {
       elements.personInput.click();
     } else if (itemPrompt) {
       elements.garmentInput.click();
     }
   });
+
+  elements.moodBoard.addEventListener("dragenter", handleBoardDrag);
+  elements.moodBoard.addEventListener("dragover", handleBoardDrag);
+  elements.moodBoard.addEventListener("dragleave", () => {
+    elements.moodBoard.classList.remove("dragging");
+  });
+  elements.moodBoard.addEventListener("drop", (event) => {
+    event.preventDefault();
+    elements.moodBoard.classList.remove("dragging");
+    setAutoImages(Array.from(event.dataTransfer.files || []));
+  });
+  document.querySelectorAll("[data-add-person]").forEach((button) => {
+    button.addEventListener("click", () => elements.personInput.click());
+  });
+  document.querySelectorAll("[data-add-item]").forEach((button) => {
+    button.addEventListener("click", () => elements.garmentInput.click());
+  });
+}
+
+function handleBoardDrag(event) {
+  event.preventDefault();
+  elements.moodBoard.classList.add("dragging");
 }
 
 function bindSettingsModal() {
@@ -262,7 +293,9 @@ function chooseDefaultProviders(available) {
 function bindUpload(input, type) {
   input.addEventListener("change", () => {
     const files = Array.from(input.files || []);
-    if (type === "garment") {
+    if (type === "auto") {
+      setAutoImages(files);
+    } else if (type === "garment") {
       if (state.replacingItemId && files[0]) {
         replaceItemImage(state.replacingItemId, files[0]);
       } else {
@@ -272,10 +305,15 @@ function bindUpload(input, type) {
       setPersonImages(files);
     }
     state.replacingItemId = "";
+    input.value = "";
   });
 }
 
 function bindDropzone(dropzone, type) {
+  if (!dropzone) {
+    return;
+  }
+
   ["dragenter", "dragover"].forEach((eventName) => {
     dropzone.addEventListener(eventName, (event) => {
       event.preventDefault();
@@ -292,12 +330,21 @@ function bindDropzone(dropzone, type) {
 
   dropzone.addEventListener("drop", (event) => {
     const files = Array.from(event.dataTransfer.files || []);
-    if (type === "garment") {
+    if (type === "auto") {
+      setAutoImages(files);
+    } else if (type === "garment") {
       setItemImages(files);
     } else {
       setPersonImages(files);
     }
   });
+}
+
+async function setAutoImages(files) {
+  elements.studioError.textContent = "";
+  for (const file of files) {
+    await setImage("auto", file);
+  }
 }
 
 async function setPersonImages(files) {
@@ -337,9 +384,11 @@ async function replaceItemImage(itemId, file) {
 }
 
 function setImage(type, file) {
-  const errorElement = type === "person" ? elements.personError : elements.garmentError;
-  const previewElement = type === "person" ? elements.personPreview : elements.garmentPreview;
-  const dropzoneElement = type === "person" ? elements.personDropzone : elements.garmentDropzone;
+  const errorElement = type === "person"
+    ? elements.personError
+    : type === "garment"
+      ? elements.garmentError
+      : elements.studioError;
 
   errorElement.textContent = "";
 
@@ -366,7 +415,9 @@ function setImage(type, file) {
           analysis
         };
 
-        if (type === "garment") {
+        const resolvedType = type === "auto" ? inferUploadRole(image) : type;
+
+        if (resolvedType === "garment") {
           const item = createItemFromImage(image);
           state.items.push(item);
           selectFitModeForNewItem();
@@ -396,11 +447,26 @@ function setImage(type, file) {
 function renderUploadMeta(type, image) {
   const meta = type === "person" ? elements.personMeta : elements.garmentMeta;
   if (type === "person") {
-    meta.textContent = state.persons.length > 1 ? `${state.persons.length} people uploaded` : "Person ready";
+    if (meta) {
+      meta.textContent = state.persons.length > 1 ? `${state.persons.length} people uploaded` : "Person ready";
+    }
+    elements.studioMeta.textContent = sessionMetaText();
     return;
   }
 
-  meta.textContent = state.items.length > 1 ? `${state.items.length} items uploaded` : "1 item uploaded";
+  if (meta) {
+    meta.textContent = state.items.length > 1 ? `${state.items.length} items uploaded` : "1 item uploaded";
+  }
+  elements.studioMeta.textContent = sessionMetaText();
+}
+
+function sessionMetaText() {
+  const people = state.persons.length;
+  const items = state.items.length;
+  if (!people && !items) {
+    return "Person + outfit pieces";
+  }
+  return `${people} ${people === 1 ? "person" : "people"} · ${items} ${items === 1 ? "item" : "items"}`;
 }
 
 function createPersonFromImage(image) {
@@ -426,6 +492,22 @@ function createItemFromImage(image) {
   };
 }
 
+function inferUploadRole(image) {
+  const name = image.name.toLowerCase();
+  const personWords = ["person", "people", "body", "fullbody", "full-body", "self", "me", "model", "人像", "本人", "全身", "身体", "模特"];
+  const itemWords = ["shirt", "tee", "pants", "jeans", "skirt", "dress", "shoe", "bag", "hat", "coat", "jacket", "上衣", "裤", "裙", "鞋", "包", "帽", "外套", "商品"];
+  if (itemWords.some((word) => name.includes(word))) {
+    return "garment";
+  }
+  if (personWords.some((word) => name.includes(word))) {
+    return "person";
+  }
+
+  const ratio = image.analysis.height / image.analysis.width;
+  const likelyPerson = ratio >= 1.35 && image.analysis.width > 420 && image.analysis.height > 760;
+  return likelyPerson && state.persons.length === 0 ? "person" : "garment";
+}
+
 function getActivePerson() {
   return state.persons.find((person) => person.id === state.activePersonId) || null;
 }
@@ -439,7 +521,7 @@ function setActivePerson(personId) {
   state.activePersonId = person.id;
   elements.personPreview.src = person.dataUrl;
   elements.personPreview.hidden = false;
-  elements.personDropzone.classList.add("has-image");
+  elements.personDropzone?.classList.add("has-image");
   renderUploadMeta("person", person);
   renderPersonStrip();
   renderMoodBoard();
@@ -448,16 +530,22 @@ function setActivePerson(personId) {
 function renderPersonStrip() {
   if (state.persons.length === 0) {
     elements.personStrip.innerHTML = `<p class="empty-shelf">No people yet</p>`;
-    elements.personMeta.textContent = "No person yet";
+    if (elements.personMeta) {
+      elements.personMeta.textContent = "No person yet";
+    }
+    elements.studioMeta.textContent = sessionMetaText();
     return;
   }
 
   elements.personStrip.innerHTML = state.persons
     .map((person, index) => `
-      <button class="person-card ${person.id === state.activePersonId ? "active" : ""}" data-person-id="${person.id}" type="button">
-        <img src="${person.dataUrl}" alt="" />
-        <span>${person.label || `Person ${index + 1}`}</span>
-      </button>
+      <article class="person-card ${person.id === state.activePersonId ? "active" : ""}">
+        <button class="person-card-main" data-person-id="${person.id}" type="button">
+          <img src="${person.dataUrl}" alt="" />
+          <span>${person.id === state.activePersonId ? "Main person" : person.label || `Person ${index + 1}`}</span>
+        </button>
+        <button class="person-remove-button" data-person-remove="${person.id}" type="button" aria-label="Remove ${person.label || `Person ${index + 1}`}">×</button>
+      </article>
     `)
     .join("");
 
@@ -468,11 +556,42 @@ function renderPersonStrip() {
       renderAutoSummary();
     });
   });
+  elements.personStrip.querySelectorAll("[data-person-remove]").forEach((button) => {
+    button.addEventListener("click", () => {
+      removePerson(button.dataset.personRemove);
+    });
+  });
 
   const active = getActivePerson();
   if (active) {
     renderUploadMeta("person", active);
   }
+}
+
+function removePerson(personId) {
+  const index = state.persons.findIndex((person) => person.id === personId);
+  if (index === -1) {
+    return;
+  }
+
+  state.persons.splice(index, 1);
+  if (state.activePersonId === personId) {
+    state.activePersonId = state.persons[Math.max(0, index - 1)]?.id || state.persons[0]?.id || "";
+    const activePerson = getActivePerson();
+    if (activePerson) {
+      elements.personPreview.src = activePerson.dataUrl;
+      elements.personPreview.hidden = false;
+    } else {
+      elements.personPreview.hidden = true;
+      elements.personPreview.removeAttribute("src");
+      elements.personDropzone?.classList.remove("has-image");
+    }
+  }
+
+  renderPersonStrip();
+  renderMoodBoard();
+  renderQualityPanel();
+  renderAutoSummary();
 }
 
 function getActiveItem() {
@@ -488,7 +607,7 @@ function setActiveItem(itemId) {
   state.activeItemId = item.id;
   elements.garmentPreview.src = item.dataUrl;
   elements.garmentPreview.hidden = false;
-  elements.garmentDropzone.classList.add("has-image");
+  elements.garmentDropzone?.classList.add("has-image");
   renderUploadMeta("garment", item);
   syncControlsFromItem(item);
   renderProviders();
@@ -519,7 +638,10 @@ function updateActiveItemFromControls() {
 function renderItemShelf() {
   if (state.items.length === 0) {
     elements.itemShelf.innerHTML = `<p class="empty-shelf">No items yet</p>`;
-    elements.garmentMeta.textContent = "No items yet";
+    if (elements.garmentMeta) {
+      elements.garmentMeta.textContent = "No items yet";
+    }
+    elements.studioMeta.textContent = sessionMetaText();
     return;
   }
 
@@ -536,6 +658,7 @@ function renderItemShelf() {
           </span>
         </button>
         <div class="item-actions">
+          <button data-item-edit="${item.id}" type="button">${item.itemType === "unknown" ? "Set type" : "Type"}</button>
           <button data-item-replace="${item.id}" type="button">Replace</button>
           <button class="item-remove-button" data-item-remove="${item.id}" type="button" aria-label="Remove ${item.aiLabel}">×</button>
         </div>
@@ -554,6 +677,12 @@ function renderItemShelf() {
     button.addEventListener("click", () => {
       state.replacingItemId = button.dataset.itemReplace;
       elements.garmentInput.click();
+    });
+  });
+  elements.itemShelf.querySelectorAll("[data-item-edit]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setActiveItem(button.dataset.itemEdit);
+      openSettings();
     });
   });
   elements.itemShelf.querySelectorAll("[data-item-remove]").forEach((button) => {
@@ -585,7 +714,7 @@ function removeItem(itemId) {
   if (state.items.length === 0) {
     elements.garmentPreview.hidden = true;
     elements.garmentPreview.removeAttribute("src");
-    elements.garmentDropzone.classList.remove("has-image");
+    elements.garmentDropzone?.classList.remove("has-image");
   } else if (state.activeItemId) {
     const activeItem = getActiveItem();
     elements.garmentPreview.src = activeItem.dataUrl;
@@ -607,7 +736,7 @@ function renderMoodBoard() {
   applyBoardPalette(activePerson, getActiveItem());
   if (!activePerson) {
     elements.moodBoard.innerHTML = `
-      <button class="empty-board-image-button" data-upload-person type="button" aria-label="Upload person and outfit pieces">
+      <button class="empty-board-image-button" data-upload-studio type="button" aria-label="Upload person and outfit pieces">
         <img class="empty-board-image" src="./assets/empty-board-reference.jpg" alt="Drop a person and outfit pieces" fetchpriority="high" decoding="async" />
       </button>
     `;
@@ -1389,15 +1518,21 @@ function resetRun() {
   state.items = [];
   state.activeItemId = "";
   state.results = [];
+  elements.studioInput.value = "";
   elements.personInput.value = "";
   elements.garmentInput.value = "";
-  elements.personMeta.textContent = "No people yet";
-  elements.garmentMeta.textContent = "No items yet";
+  elements.studioMeta.textContent = sessionMetaText();
+  if (elements.personMeta) {
+    elements.personMeta.textContent = "No people yet";
+  }
+  if (elements.garmentMeta) {
+    elements.garmentMeta.textContent = "No items yet";
+  }
   [elements.personPreview, elements.garmentPreview].forEach((preview) => {
     preview.hidden = true;
     preview.removeAttribute("src");
   });
-  [elements.personDropzone, elements.garmentDropzone].forEach((dropzone) => dropzone.classList.remove("has-image"));
+  [elements.personDropzone, elements.garmentDropzone].forEach((dropzone) => dropzone?.classList.remove("has-image"));
   elements.formError.textContent = "";
   elements.saveButton.disabled = true;
   renderPersonStrip();

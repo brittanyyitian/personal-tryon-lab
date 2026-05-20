@@ -2745,6 +2745,127 @@ body[data-theme="minimal"] .action-row {
   margin-top: 28px;
 }
 
+body[data-theme="minimal"] .upload-dock {
+  width: 320px;
+  grid-template-columns: 1fr;
+  padding-top: 32px;
+}
+
+body[data-theme="minimal"] .studio-dropzone {
+  min-height: 140px;
+  width: 100%;
+  border-color: rgba(13, 13, 13, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.48);
+  text-align: center;
+}
+
+.utility-input {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.session-group {
+  margin-top: 22px;
+}
+
+.session-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.inline-add-button {
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  background: transparent;
+  padding: 0 0 2px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+body[data-theme="minimal"] .person-strip {
+  display: grid;
+  gap: 8px;
+  min-height: 0;
+  margin-top: 12px;
+  overflow: visible;
+}
+
+body[data-theme="minimal"] .person-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-bottom: 1px solid rgba(13, 13, 13, 0.08);
+  background: transparent;
+  padding: 0 0 10px;
+}
+
+body[data-theme="minimal"] .person-card-main {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+body[data-theme="minimal"] .person-card-main img {
+  width: 42px;
+  height: 52px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.72);
+  filter: grayscale(1);
+}
+
+body[data-theme="minimal"] .person-card-main span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+body[data-theme="minimal"] .person-card.active .person-card-main span {
+  color: var(--ink);
+}
+
+body[data-theme="minimal"] .person-remove-button {
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(13, 13, 13, 0.12);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+body[data-theme="minimal"] .mood-board.dragging,
+body[data-theme="minimal"] .studio-dropzone.dragging {
+  box-shadow: inset 0 0 0 2px rgba(13, 13, 13, 0.28);
+}
+
 body[data-theme="minimal"] .inline-remote-panel {
   margin-top: 0;
   padding: 18px 0;
