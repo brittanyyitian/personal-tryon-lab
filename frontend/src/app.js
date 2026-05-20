@@ -412,7 +412,7 @@ function createPersonFromImage(image) {
 }
 
 function createItemFromImage(image) {
-  const itemType = inferItemType(image.name);
+  const itemType = inferItemType(image);
   const color = inferDominantColor(image.analysis);
   const detail = inferItemDetail(image.name, itemType);
   return {
@@ -682,8 +682,8 @@ function selectFitModeForNewItem() {
   }
 }
 
-function inferItemType(fileName) {
-  const name = fileName.toLowerCase();
+function inferItemType(image) {
+  const name = image.name.toLowerCase();
   const rules = [
     ["dress", ["dress", "gown", "连衣裙", "裙"]],
     ["pants", ["pants", "trouser", "jeans", "牛仔", "裤"]],
@@ -695,7 +695,20 @@ function inferItemType(fileName) {
     ["top", ["shirt", "tee", "tshirt", "sweater", "top", "blouse", "上衣", "衬衫", "毛衣"]]
   ];
 
-  return rules.find(([, words]) => words.some((word) => name.includes(word)))?.[0] || "top";
+  const fileNameMatch = rules.find(([, words]) => words.some((word) => name.includes(word)))?.[0];
+  if (fileNameMatch) {
+    return fileNameMatch;
+  }
+
+  const ratio = image.analysis.width / image.analysis.height;
+  if (ratio >= 1.7) {
+    return "shoes";
+  }
+  if (ratio <= 0.62) {
+    return "pants";
+  }
+
+  return "unknown";
 }
 
 function inferGarmentSource(fileName) {
@@ -745,6 +758,9 @@ function inferItemDetail(fileName, itemType) {
   if (detected) {
     return detected;
   }
+  if (itemType === "unknown") {
+    return "check";
+  }
   if (["bag", "shoes", "hat"].includes(itemType)) {
     return "statement";
   }
@@ -752,6 +768,9 @@ function inferItemDetail(fileName, itemType) {
 }
 
 function buildItemLabel(color, detail, itemType) {
+  if (itemType === "unknown") {
+    return "check item type";
+  }
   return `${color} ${detail} ${labelForItem(itemType).toLowerCase()}`;
 }
 
@@ -765,6 +784,14 @@ function renderAutoSummary() {
   elements.autoTitle.hidden = false;
   elements.autoSummary.hidden = false;
   elements.caseSection.hidden = true;
+
+  if (activePerson && activeItem?.itemType === "unknown") {
+    elements.autoTitle.textContent = "CHECK ITEM TYPE";
+    elements.autoSummary.innerHTML = `
+      <p>Choose whether this piece is a top, pants, skirt, shoes, bag, or hat before generating.</p>
+    `;
+    return;
+  }
 
   if (!activePerson && state.items.length > 0) {
     elements.autoTitle.textContent = "UPLOAD A PERSON";
@@ -802,6 +829,7 @@ function renderAutoSummary() {
 
 function labelForItem(value) {
   return {
+    unknown: "Item",
     top: "Top",
     outerwear: "Outerwear",
     dress: "Dress",
@@ -952,6 +980,12 @@ async function generateResults() {
 
   if (!activePerson || !activeItem) {
     elements.formError.textContent = "Add a person image and at least one item image first.";
+    return;
+  }
+
+  if (activeItem.itemType === "unknown") {
+    elements.formError.textContent = "Choose the item type in Correction before generating.";
+    openSettings();
     return;
   }
 
