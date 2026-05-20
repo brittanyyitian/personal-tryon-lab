@@ -2601,12 +2601,15 @@ body[data-theme="minimal"] .workspace {
 }
 
 body[data-theme="minimal"] .mood-board {
-  height: min(720px, calc(100vh - 270px));
-  min-height: 590px;
+  aspect-ratio: 3 / 2;
+  height: auto;
+  min-height: 0;
+  max-height: calc(100vh - 270px);
   border: 0;
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.34);
   box-shadow: inset 0 0 0 1px rgba(13, 13, 13, 0.08);
+  overflow: hidden;
 }
 
 body[data-theme="minimal"] .empty-board-image-button {
@@ -2625,7 +2628,7 @@ body[data-theme="minimal"] .empty-board-image {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   border: 0;
   user-select: none;
 }
