@@ -30,15 +30,23 @@ async function classifyItemImage(payload) {
   const image = payload.image || "";
   assertImageData(image);
 
-  const remote = await classifyWithHuggingFace(image).catch(() => null);
+  const remote = await classifyWithHuggingFace(image);
   if (remote?.type) {
     return remote;
   }
 
-  return classifyWithLocalHints({
+  const local = classifyWithLocalHints({
     fileName: payload.fileName || "",
     image
   });
+  if (remote?.error) {
+    return {
+      ...local,
+      remoteError: remote.error,
+      remoteAttempts: remote.attempts
+    };
+  }
+  return local;
 }
 
 async function classifyWithHuggingFace(image) {
@@ -46,14 +54,26 @@ async function classifyWithHuggingFace(image) {
     return null;
   }
 
+  const attempts = [];
   for (const model of classifierModels()) {
-    const result = await classifyWithHuggingFaceModel(model, image).catch(() => null);
+    const result = await classifyWithHuggingFaceModel(model, image).catch((error) => ({
+      error: error.message || "remote failed",
+      details: error.details
+    }));
     if (result?.type) {
       return result;
     }
+    attempts.push({
+      model,
+      error: result?.error || "no classification",
+      details: result?.details
+    });
   }
 
-  return null;
+  return {
+    error: "remote-classifier-unavailable",
+    attempts: attempts.map(summarizeAttempt)
+  };
 }
 
 async function classifyWithHuggingFaceModel(model, image) {
@@ -74,7 +94,9 @@ async function classifyWithHuggingFaceModel(model, image) {
     })
   }, Number(process.env.HF_ITEM_CLASSIFIER_TIMEOUT_MS || 12000));
   if (!response.ok) {
-    return null;
+    const error = new Error(`HF classifier ${model} returned ${response.status}.`);
+    error.details = summarizeRemoteData(await response.text());
+    throw error;
   }
 
   const data = await response.json().catch(() => null);
@@ -82,14 +104,17 @@ async function classifyWithHuggingFaceModel(model, image) {
   const index = ZERO_SHOT_LABELS.findIndex((label) => label === winner?.label);
   const type = ITEM_TYPES[index];
   if (!type) {
-    return null;
+    const error = new Error(`HF classifier ${model} returned an unsupported shape.`);
+    error.details = summarizeRemoteData(data);
+    throw error;
   }
 
   return {
     type,
     label: LABELS[type],
     confidence: Number(winner.score || 0),
-    source: model.includes("fashion") ? "fashionclip" : "clip"
+    source: model.includes("fashion") ? "fashionclip" : "clip",
+    model
   };
 }
 
@@ -120,6 +145,34 @@ function normalizeZeroShotWinner(data) {
     };
   }
   return null;
+}
+
+function summarizeAttempt(attempt) {
+  return {
+    model: attempt.model,
+    error: attempt.error,
+    details: summarizeRemoteData(attempt.details)
+  };
+}
+
+function summarizeRemoteData(data) {
+  if (!data) {
+    return null;
+  }
+  if (typeof data === "string") {
+    return data.length > 280 ? `${data.slice(0, 280)}...` : data;
+  }
+  if (Array.isArray(data)) {
+    return data.slice(0, 3).map(summarizeRemoteData);
+  }
+  if (typeof data === "object") {
+    const output = {};
+    for (const [key, value] of Object.entries(data).slice(0, 8)) {
+      output[key] = summarizeRemoteData(value);
+    }
+    return output;
+  }
+  return data;
 }
 
 function classifyWithLocalHints({ fileName, image }) {
