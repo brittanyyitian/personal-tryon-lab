@@ -57,7 +57,11 @@
 
       <section class="workspace mood-workspace" aria-label="试穿输入">
         <div class="mood-board-panel">
-          <div class="mood-board" id="moodBoard" aria-label="AI understood items"></div>
+          <div class="mood-board is-empty" id="moodBoard" aria-label="AI understood items">
+            <button class="empty-board-image-button" data-upload-person type="button" aria-label="Upload person and outfit pieces">
+              <img class="empty-board-image" src="./assets/empty-board-reference.jpg" alt="Drop a person and outfit pieces" fetchpriority="high" decoding="async" />
+            </button>
+          </div>
         </div>
         <div class="control-panel insight-panel">
           <div class="auto-card">
@@ -68,7 +72,7 @@
             <div class="item-shelf" id="itemShelf" aria-label="Uploaded items"></div>
           </div>
 
-          <button class="settings-button" id="settingsButton" type="button">Correction</button>
+          <button class="settings-button" id="settingsButton" type="button" hidden>Correction</button>
 
           <div class="advanced-panel" id="settingsPanel" hidden>
             <div class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
@@ -145,14 +149,14 @@
               </label>
               <div class="key-status" id="keyStatus"></div>
             </div>
-            <button class="primary-button" id="generateButton" type="button">Generate real try-on</button>
+            <button class="primary-button" id="generateButton" type="button" hidden>Generate real try-on</button>
           </div>
         </div>
       </section>
 
       <p class="studio-tip">Tip: Use a full-body photo with a clean background for best results.</p>
 
-      <section class="case-section" id="caseSection" aria-label="Case study">
+      <section class="case-section" id="caseSection" aria-label="Case study" hidden>
         <div>
           <h2>Ready when the board is right.</h2>
         </div>
@@ -171,7 +175,7 @@
         <div class="result-grid" id="resultGrid" hidden></div>
       </section>
 
-      <section class="saved-section" aria-label="已保存评测">
+      <section class="saved-section" aria-label="已保存评测" hidden>
         <div class="section-heading compact">
           <div>
             <p class="eyebrow">LOCAL NOTES</p>
