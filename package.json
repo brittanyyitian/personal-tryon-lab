@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node backend/server.js",
     "start": "node backend/server.js",
-    "check": "node --check backend/server.js && node --check backend/providers.js && node --check backend/config.js && node --check backend/supabase.js && node --check backend/tryon-handler.js && node --check api/_utils.js && node --check api/config.js && node --check api/tryon.js && node --check frontend/src/app.js"
+    "check": "node --check backend/server.js && node --check backend/providers.js && node --check backend/config.js && node --check backend/item-classifier.js && node --check backend/supabase.js && node --check backend/tryon-handler.js && node --check api/_utils.js && node --check api/classify-item.js && node --check api/config.js && node --check api/tryon.js && node --check frontend/src/app.js"
   },
   "dependencies": {
     "@gradio/client": "^2.2.0"

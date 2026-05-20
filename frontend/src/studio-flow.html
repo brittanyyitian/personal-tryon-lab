@@ -512,6 +512,22 @@
         line-height: 1.45;
       }
 
+      .item-type-select {
+        width: max-content;
+        min-width: 96px;
+        margin-top: 8px;
+        border: 0;
+        border-bottom: 1px solid rgba(16, 16, 16, 0.34);
+        border-radius: 0;
+        background: transparent;
+        color: var(--ink);
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
       .remove-button {
         width: 28px;
         height: 28px;
@@ -764,6 +780,15 @@
       const nextButton = document.querySelector("#nextButton");
       const personInput = document.querySelector("#personInput");
       const itemsInput = document.querySelector("#itemsInput");
+      const itemTypes = [
+        ["top", "Top"],
+        ["pants", "Pants"],
+        ["skirt", "Skirt"],
+        ["dress", "Dress"],
+        ["shoes", "Shoes"],
+        ["bag", "Bag"],
+        ["hat", "Hat"]
+      ];
 
       function fileToUrl(file) {
         return URL.createObjectURL(file);
@@ -780,6 +805,10 @@
 
       function itemTypeLabel() {
         return state.items.length ? "CHECK ITEM TYPE" : "START WITH PHOTOS";
+      }
+
+      function displayItemType(type) {
+        return (itemTypes.find(([value]) => value === type) || itemTypes[0])[1];
       }
 
       function renderBoard() {
@@ -899,11 +928,28 @@
               <img src="${item.url}" alt="" />
               <span>
                 <strong>${item.label}</strong>
-                <small>Item · On model<br />${item.name}</small>
+                <small>Auto · ${item.classifierSource || "fallback"}<br />${item.name}</small>
+                <select class="item-type-select" data-item-type="${index}" aria-label="Item type">
+                  ${itemTypes.map(([value, label]) => `
+                    <option value="${value}" ${item.itemType === value ? "selected" : ""}>${label}</option>
+                  `).join("")}
+                </select>
               </span>
               <button class="remove-button" data-remove-item="${index}" type="button" aria-label="Remove item">×</button>
             </div>
           `);
+        });
+        panel.querySelectorAll("[data-item-type]").forEach((select) => {
+          select.addEventListener("change", () => {
+            const item = state.items[Number(select.dataset.itemType)];
+            item.itemType = select.value;
+            item.label = displayItemType(select.value).toUpperCase();
+            item.classifierSource = "manual";
+            state.resultStatus = "idle";
+            state.results = [];
+            state.done.generate = false;
+            render();
+          });
         });
         panel.querySelectorAll("[data-remove-item]").forEach((button) => {
           button.addEventListener("click", () => {
@@ -979,14 +1025,19 @@
         if (!files.length) {
           return;
         }
-        const items = await Promise.all(files.map(async (file) => ({
-          name: file.name,
-          url: fileToUrl(file),
-          dataUrl: await fileToDataUrl(file),
-          itemType: "top",
-          source: "on-model",
-          label: "CHECK ITEM TYPE"
-        })));
+        const items = await Promise.all(files.map(async (file) => {
+          const dataUrl = await fileToDataUrl(file);
+          const classified = await classifyItem(file, dataUrl);
+          return {
+            name: file.name,
+            url: fileToUrl(file),
+            dataUrl,
+            itemType: classified.type,
+            source: "on-model",
+            label: classified.label.toUpperCase(),
+            classifierSource: classified.source
+          };
+        }));
         state.items.push(...items);
         state.done.items = true;
         state.current = "generate";
@@ -996,6 +1047,36 @@
         itemsInput.value = "";
         render();
       });
+
+      async function classifyItem(file, dataUrl) {
+        try {
+          const response = await fetch("/api/classify-item", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              fileName: file.name,
+              image: dataUrl
+            })
+          });
+          const result = await response.json().catch(() => ({}));
+          if (response.ok && result.type) {
+            return {
+              type: result.type,
+              label: result.label || displayItemType(result.type),
+              source: result.source || "auto"
+            };
+          }
+        } catch {
+          // Keep upload flow unblocked if classification fails.
+        }
+        return {
+          type: "top",
+          label: "Top",
+          source: "fallback"
+        };
+      }
 
       nextButton.addEventListener("click", () => {
         if (state.current === "generate") {

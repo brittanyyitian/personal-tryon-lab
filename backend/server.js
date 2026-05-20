@@ -2,6 +2,7 @@ const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
 const { keyStatus, loadEnv } = require("./config");
+const { classifyItemImage } = require("./item-classifier");
 const { runTryonJob } = require("./tryon-handler");
 
 loadEnv();
@@ -36,6 +37,13 @@ const server = http.createServer(async (request, response) => {
     if (url.pathname === "/api/tryon" && request.method === "POST") {
       const payload = await readJsonBody(request);
       const result = await runTryonJob(payload);
+      sendJson(response, 200, result);
+      return;
+    }
+
+    if (url.pathname === "/api/classify-item" && request.method === "POST") {
+      const payload = await readJsonBody(request);
+      const result = await classifyItemImage(payload);
       sendJson(response, 200, result);
       return;
     }
