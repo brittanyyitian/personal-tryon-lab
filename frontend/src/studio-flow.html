@@ -180,51 +180,28 @@
       }
 
       .header {
-        padding-bottom: 28px;
-        border-bottom: 1px solid var(--line);
+        padding-bottom: 14px;
       }
 
       h1 {
         margin: 0;
         font-family: var(--display);
-        font-size: clamp(82px, 7.3vw, 116px);
+        font-size: clamp(58px, 5.2vw, 82px);
         font-weight: 400;
         letter-spacing: -0.04em;
         line-height: 0.9;
       }
 
       .subtitle {
-        margin: 16px 0 0;
+        margin: 10px 0 0;
         color: var(--muted);
-        font-size: 17px;
+        font-size: 14px;
         line-height: 1.45;
-      }
-
-      .stage-title {
-        margin: 26px 0 14px;
-        display: flex;
-        align-items: end;
-        justify-content: space-between;
-        gap: 24px;
-      }
-
-      .stage-title h2 {
-        margin: 0;
-        font-size: 13px;
-        font-weight: 900;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-      }
-
-      .stage-title span {
-        color: var(--muted);
-        font-size: 12px;
-        font-weight: 900;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+        white-space: nowrap;
       }
 
       .board {
+        margin-top: 18px;
         position: relative;
         aspect-ratio: 3 / 2;
         overflow: hidden;
@@ -266,17 +243,6 @@
         font-size: 12px;
         font-weight: 900;
         letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
-      .board-masthead {
-        position: absolute;
-        top: 28px;
-        left: 32px;
-        z-index: 6;
-        font-size: 13px;
-        font-weight: 900;
-        letter-spacing: 0.02em;
         text-transform: uppercase;
       }
 
@@ -338,7 +304,9 @@
         width: 142px;
         min-height: 166px;
         padding: 8px;
-        transition: transform 160ms ease;
+        z-index: 4;
+        animation: item-in 240ms ease both;
+        transition: transform 160ms ease, opacity 160ms ease;
       }
 
       .paper-item img {
@@ -373,6 +341,10 @@
         transform: rotate(0deg) scale(1.03);
       }
 
+      .paper-item:hover {
+        z-index: 8;
+      }
+
       .pin-dot {
         position: absolute;
         top: 6px;
@@ -385,56 +357,67 @@
       }
 
       .paper-item-1 {
-        top: 18%;
-        right: 10%;
+        top: 14%;
+        right: 4%;
         transform: rotate(2deg);
       }
 
       .paper-item-2 {
-        top: 43%;
-        right: 8%;
+        top: 47%;
+        right: 0;
         transform: rotate(-2deg);
       }
 
       .paper-item-3 {
-        top: 22%;
-        left: 9%;
+        top: 32%;
+        left: 7%;
         transform: rotate(-2deg);
       }
 
       .paper-item-4 {
-        right: 11%;
-        bottom: 12%;
+        right: 24%;
+        bottom: 7%;
         transform: rotate(2deg);
       }
 
       .paper-item-5 {
-        top: 50%;
-        left: 10%;
+        top: 55%;
+        left: 2%;
         transform: rotate(1deg);
+      }
+
+      @keyframes item-in {
+        from {
+          opacity: 0;
+          translate: 0 10px;
+        }
+
+        to {
+          opacity: 1;
+          translate: 0 0;
+        }
       }
 
       .tip {
         margin: 0;
-        padding-top: 22px;
-        border-top: 1px solid var(--line);
+        padding-top: 14px;
         color: var(--muted);
         font-size: 13px;
       }
 
       .side {
         min-width: 0;
-        padding-top: 157px;
-      }
-
-      .side.is-empty {
-        visibility: hidden;
+        padding-top: 134px;
       }
 
       .side-section {
-        border-bottom: 1px solid var(--line);
         padding-bottom: 28px;
         margin-bottom: 28px;
+      }
+
+      .side-section > h3,
+      .side-section > p {
+        display: none;
       }
 
       .side h3 {
@@ -461,37 +444,32 @@
         min-height: 116px;
         margin-top: 28px;
         padding: 16px 12px;
+        border-radius: 8px;
         background: #efefec;
       }
 
-      .add-item-card {
+      .upload-card {
         width: 100%;
         min-height: 86px;
         display: grid;
-        grid-template-columns: 36px 70px 1fr;
+        grid-template-columns: 54px 1fr;
         gap: 12px;
         align-items: center;
         margin-top: 24px;
         padding: 14px 12px;
         border: 1px dashed rgba(16, 16, 16, 0.24);
+        border-radius: 8px;
         background: rgba(255, 255, 255, 0.45);
         color: var(--ink);
         text-align: left;
         cursor: pointer;
       }
 
-      .add-item-card span:first-child {
-        font-family: var(--display);
-        font-size: 28px;
-        line-height: 1;
-      }
-
-      .add-item-icon {
-        width: 70px;
-        height: 70px;
+      .upload-card-icon {
+        width: 54px;
+        height: 54px;
         display: grid;
         place-items: center;
-        background: #fff;
         color: var(--muted);
         font-size: 28px;
         line-height: 1;
@@ -507,27 +485,27 @@
         width: 70px;
         height: 70px;
         object-fit: contain;
-        background: #fff;
-        padding: 8px;
+        background: transparent;
+        padding: 0;
       }
 
       .item-card strong,
       .item-card small,
-      .add-item-card strong,
-      .add-item-card small {
+      .upload-card strong,
+      .upload-card small {
         display: block;
         text-transform: uppercase;
       }
 
       .item-card strong,
-      .add-item-card strong {
+      .upload-card strong {
         margin-bottom: 8px;
         font-size: 14px;
         font-weight: 900;
       }
 
       .item-card small,
-      .add-item-card small {
+      .upload-card small {
         color: var(--muted);
         font-size: 11px;
         font-weight: 900;
@@ -537,12 +515,113 @@
       .remove-button {
         width: 28px;
         height: 28px;
+        display: grid;
+        place-items: center;
         border: 1px solid var(--line);
         border-radius: 50%;
         background: transparent;
         font-size: 22px;
         line-height: 1;
+        padding: 0 0 2px;
         cursor: pointer;
+      }
+
+      .generation-state,
+      .result-state {
+        position: absolute;
+        inset: 0;
+        z-index: 12;
+        display: grid;
+        place-items: center;
+        background: rgba(251, 250, 248, 0.82);
+        backdrop-filter: blur(8px);
+      }
+
+      .generation-card,
+      .result-card {
+        display: grid;
+        place-items: center;
+        gap: 14px;
+        text-align: center;
+      }
+
+      .result-card {
+        width: min(84%, 660px);
+      }
+
+      .spinner {
+        width: 42px;
+        height: 42px;
+        border: 1px solid rgba(16, 16, 16, 0.18);
+        border-top-color: var(--ink);
+        border-radius: 50%;
+        animation: spin 780ms linear infinite;
+      }
+
+      .generation-card strong,
+      .result-card strong {
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .result-frame {
+        width: min(56%, 430px);
+        padding: 12px 12px 42px;
+        background: #fff;
+        clip-path: polygon(5% 0, 95% 2%, 100% 91%, 53% 100%, 0 93%, 0 9%);
+        box-shadow: 0 18px 38px rgba(0, 0, 0, 0.1);
+        transform: rotate(-0.8deg);
+      }
+
+      .result-frame img {
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        object-fit: cover;
+        filter: contrast(1.04) saturate(0.96);
+      }
+
+      .result-grid {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 14px;
+        align-items: end;
+      }
+
+      .result-tile {
+        display: grid;
+        gap: 8px;
+        justify-items: center;
+      }
+
+      .result-tile .result-frame {
+        width: 100%;
+      }
+
+      .result-tile span {
+        max-width: 100%;
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+        color: var(--muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .error-text {
+        max-width: 420px;
+        color: #9b2d24;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      @keyframes spin {
+        to {
+          rotate: 360deg;
+        }
       }
 
       .upload-input {
@@ -611,13 +690,8 @@
       <section class="main">
         <header class="header">
           <h1>AI Try-On</h1>
-          <p class="subtitle">Upload a person and outfit pieces.<br />We'll generate a realistic try-on.</p>
+          <p class="subtitle">Upload a person and outfit pieces. We'll generate a realistic try-on.</p>
         </header>
-
-        <div class="stage-title">
-          <h2 id="stageTitle">Person Reference</h2>
-          <span id="stageStatus">Waiting for upload</span>
-        </div>
 
         <section class="board empty" id="board" aria-label="Try-on board">
           <img class="empty-board-image" src="./assets/empty-board-reference.jpg" alt="Drop a person and outfit pieces" />
@@ -647,6 +721,10 @@
         current: "person",
         person: null,
         items: [],
+        resultStatus: "idle",
+        results: [],
+        resultError: "",
+        generatingIndex: 0,
         done: {
           person: false,
           items: false,
@@ -691,6 +769,15 @@
         return URL.createObjectURL(file);
       }
 
+      function fileToDataUrl(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.addEventListener("load", () => resolve(reader.result));
+          reader.addEventListener("error", () => reject(reader.error || new Error("Could not read file.")));
+          reader.readAsDataURL(file);
+        });
+      }
+
       function itemTypeLabel() {
         return state.items.length ? "CHECK ITEM TYPE" : "START WITH PHOTOS";
       }
@@ -710,7 +797,7 @@
 
         const items = state.items
           .map((item, index) => `
-            <button class="paper-item paper-item-${(index % 5) + 1} ${index === 0 ? "active" : ""}" data-item-index="${index}" type="button">
+            <button class="paper-item paper-item-${(index % 5) + 1}" data-item-index="${index}" type="button">
               <span class="item-number">${String(index + 1).padStart(2, "0")}</span>
               <img src="${item.url}" alt="" />
               <span class="pin-dot"></span>
@@ -721,32 +808,76 @@
 
         board.className = "board";
         board.innerHTML = `
-          <div class="board-masthead"><strong>Selected person</strong></div>
           <button class="paper-person" type="button" aria-label="Selected person">
             <span class="paper-cutout"></span>
             <img src="${state.person.url}" alt="" />
             <span>Full body · Clear</span>
           </button>
           <div class="paper-item-layer">${items}</div>
+          ${state.resultStatus === "loading" ? `
+            <div class="generation-state">
+              <div class="generation-card">
+                <span class="spinner"></span>
+                <strong>Generating try-on</strong>
+                <span>${state.generatingIndex} / ${state.items.length}</span>
+              </div>
+            </div>
+          ` : ""}
+          ${state.resultStatus === "done" ? `
+            <div class="result-state">
+              <div class="result-card">
+                <div class="result-grid">
+                  ${state.results.map((result) => `
+                    <div class="result-tile">
+                      <div class="result-frame">
+                        <img src="${result.imageUrl}" alt="" />
+                      </div>
+                      <span>${result.itemName}</span>
+                    </div>
+                  `).join("")}
+                </div>
+                <strong>Try-on study ready</strong>
+              </div>
+            </div>
+          ` : ""}
+          ${state.resultStatus === "error" ? `
+            <div class="result-state">
+              <div class="result-card">
+                <strong>Generation failed</strong>
+                <p class="error-text">${state.resultError}</p>
+              </div>
+            </div>
+          ` : ""}
         `;
       }
 
       function renderSidePanel() {
-        const shouldShowSide = state.current !== "person";
-        sidePanel.classList.toggle("is-empty", !shouldShowSide);
-        if (!shouldShowSide) {
-          return;
-        }
-
         const title = document.querySelector("#itemPanelTitle");
         const copyText = document.querySelector("#itemPanelCopy");
         const panel = document.querySelector("#itemPanel");
-        title.textContent = itemTypeLabel();
-        panel.querySelectorAll(".add-item-card, .item-card").forEach((node) => node.remove());
+        panel.querySelectorAll(".upload-card, .item-card").forEach((node) => node.remove());
+        title.textContent = "";
+        copyText.textContent = "";
+
+        if (state.current === "person") {
+          panel.insertAdjacentHTML("beforeend", `
+            <button class="upload-card" id="addPersonCard" type="button">
+              <span class="upload-card-icon">+</span>
+              <span>
+                <strong>Add full-body photo</strong>
+                <small>Upload a clear standing body reference</small>
+              </span>
+            </button>
+          `);
+          document.querySelector("#addPersonCard").addEventListener("click", () => {
+            personInput.click();
+          });
+          return;
+        }
+
         panel.insertAdjacentHTML("beforeend", `
-          <button class="add-item-card" id="addItemCard" type="button">
-            <span>+</span>
-            <span class="add-item-icon">+</span>
+          <button class="upload-card" id="addItemCard" type="button">
+            <span class="upload-card-icon">+</span>
             <span>
               <strong>Add item</strong>
               <small>Upload another garment or accessory</small>
@@ -758,13 +889,9 @@
         });
 
         if (!state.items.length) {
-          copyText.textContent = state.person
-            ? "Add clothing, shoes, bags, hats and more. They will appear here."
-            : "Upload a full-body person photo first. Outfit pieces will appear here after step 2.";
           return;
         }
 
-        copyText.textContent = "Choose whether this piece is a top, pants, skirt, shoes, bag, or hat before generating.";
         state.items.forEach((item, index) => {
           panel.insertAdjacentHTML("beforeend", `
             <div class="item-card">
@@ -802,10 +929,6 @@
           button.classList.toggle("done", state.done[name]);
         });
 
-        document.querySelector("#stageTitle").textContent = copy[state.current].title;
-        document.querySelector("#stageStatus").textContent = state.done[state.current]
-          ? copy[state.current].done
-          : copy[state.current].status;
         document.querySelector("#progressCopy").textContent = state.done[state.current]
           ? state.current === "generate" ? copy.generate.progress : "You can continue."
           : copy[state.current].progress;
@@ -813,10 +936,15 @@
         renderBoard();
         renderSidePanel();
 
-        nextButton.textContent = state.current === "generate" ? "Generate try-on" : "Next step";
-        nextButton.disabled = state.current === "generate"
-          ? !(state.done.person && state.done.items)
-          : !state.done[state.current];
+        if (state.current === "generate") {
+          nextButton.textContent = state.resultStatus === "loading"
+            ? "Generating"
+            : state.resultStatus === "done" ? "Generate again" : "Generate try-on";
+          nextButton.disabled = state.resultStatus === "loading" || !(state.done.person && state.done.items);
+        } else {
+          nextButton.textContent = "Next step";
+          nextButton.disabled = !state.done[state.current];
+        }
       }
 
       board.addEventListener("click", (event) => {
@@ -829,31 +957,42 @@
         }
       });
 
-      personInput.addEventListener("change", () => {
+      personInput.addEventListener("change", async () => {
         const [file] = personInput.files;
         if (!file) {
           return;
         }
         state.person = {
           name: file.name,
-          url: fileToUrl(file)
+          url: fileToUrl(file),
+          dataUrl: await fileToDataUrl(file)
         };
         state.done.person = true;
+        state.resultStatus = "idle";
+        state.results = [];
+        state.resultError = "";
         render();
       });
 
-      itemsInput.addEventListener("change", () => {
+      itemsInput.addEventListener("change", async () => {
         const files = Array.from(itemsInput.files);
         if (!files.length) {
           return;
         }
-        state.items.push(...files.map((file) => ({
+        const items = await Promise.all(files.map(async (file) => ({
           name: file.name,
           url: fileToUrl(file),
+          dataUrl: await fileToDataUrl(file),
+          itemType: "top",
+          source: "on-model",
           label: "CHECK ITEM TYPE"
         })));
+        state.items.push(...items);
         state.done.items = true;
         state.current = "generate";
+        state.resultStatus = "idle";
+        state.results = [];
+        state.resultError = "";
         itemsInput.value = "";
         render();
       });
@@ -863,9 +1002,7 @@
           if (!state.done.person || !state.done.items) {
             return;
           }
-          nextButton.textContent = "Generating";
-          nextButton.disabled = true;
-          state.done.generate = true;
+          generateTryOns();
           return;
         }
         if (!state.done[state.current]) {
@@ -873,6 +1010,60 @@
         }
         setStep(steps[steps.indexOf(state.current) + 1]);
       });
+
+      async function generateTryOns() {
+        state.resultStatus = "loading";
+        state.resultError = "";
+        state.results = [];
+        state.generatingIndex = 0;
+        state.done.generate = false;
+        render();
+
+        const failures = [];
+        for (const [index, item] of state.items.entries()) {
+          state.generatingIndex = index + 1;
+          render();
+          try {
+            const response = await fetch("/api/tryon", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                providerId: "opensource",
+                mode: "fit",
+                itemType: item.itemType,
+                garmentSource: item.source,
+                autoNormalize: false,
+                remoteEnabled: true,
+                consentAccepted: true,
+                personImage: state.person.dataUrl,
+                garmentImage: item.dataUrl
+              })
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || !data.imageUrl) {
+              throw new Error(data.error || "Remote generation failed.");
+            }
+            state.results.push({
+              itemName: item.name,
+              imageUrl: data.imageUrl
+            });
+          } catch (error) {
+            failures.push(`${item.name}: ${error.message || "Generation failed."}`);
+          }
+        }
+
+        if (state.results.length) {
+          state.resultStatus = "done";
+          state.done.generate = true;
+        } else {
+          state.resultStatus = "error";
+          state.resultError = failures.join(" / ") || "Generation failed.";
+          state.done.generate = false;
+        }
+        render();
+      }
 
       document.querySelectorAll("[data-step]").forEach((button) => {
         button.addEventListener("click", () => {
