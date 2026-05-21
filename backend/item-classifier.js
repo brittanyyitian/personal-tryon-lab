@@ -30,15 +30,20 @@ async function classifyItemImage(payload) {
   const image = payload.image || "";
   assertImageData(image);
 
+  const local = classifyWithLocalHints({
+    fileName: payload.fileName || "",
+    image,
+    visualHint: payload.visualHint
+  });
+  if (local.confidence >= 0.68 && local.type !== "top") {
+    return local;
+  }
+
   const remote = await classifyWithHuggingFace(image);
-  if (remote?.type) {
+  if (remote?.type && shouldTrustRemote(remote, local)) {
     return remote;
   }
 
-  const local = classifyWithLocalHints({
-    fileName: payload.fileName || "",
-    image
-  });
   if (remote?.error) {
     return {
       ...local,
@@ -46,7 +51,28 @@ async function classifyItemImage(payload) {
       remoteAttempts: remote.attempts
     };
   }
-  return local;
+  return {
+    ...local,
+    remoteRejected: remote?.type ? {
+      type: remote.type,
+      confidence: remote.confidence,
+      source: remote.source,
+      model: remote.model
+    } : undefined
+  };
+}
+
+function shouldTrustRemote(remote, local) {
+  if (!local || local.source === "fallback") {
+    return true;
+  }
+  if (remote.type === local.type) {
+    return true;
+  }
+  if (remote.type === "top" && local.type !== "top" && local.confidence >= 0.55) {
+    return false;
+  }
+  return Number(remote.confidence || 0) >= 0.72;
 }
 
 async function classifyWithHuggingFace(image) {
@@ -175,7 +201,7 @@ function summarizeRemoteData(data) {
   return data;
 }
 
-function classifyWithLocalHints({ fileName, image }) {
+function classifyWithLocalHints({ fileName, image, visualHint }) {
   const text = fileName.toLowerCase();
   const keywordRules = [
     ["pants", /(pants|trouser|jeans|denim|shorts|legging|cargo)/],
@@ -196,6 +222,16 @@ function classifyWithLocalHints({ fileName, image }) {
         source: "filename"
       };
     }
+  }
+
+  if (visualHint?.type && ITEM_TYPES.includes(visualHint.type)) {
+    return {
+      type: visualHint.type,
+      label: LABELS[visualHint.type],
+      confidence: Number(visualHint.confidence || 0.62),
+      source: visualHint.source || "visual-shape",
+      visualHint
+    };
   }
 
   const dimensions = readImageDimensions(image);

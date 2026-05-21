@@ -1089,8 +1089,8 @@
         }
         const items = await Promise.all(files.map(async (file) => {
           const dataUrl = await fileToDataUrl(file);
-          const classifierImage = await makeClassifierImage(file, dataUrl);
-          const classified = await classifyItem(file, classifierImage);
+          const classifierInput = await makeClassifierInput(file, dataUrl);
+          const classified = await classifyItem(file, classifierInput);
           return {
             name: file.name,
             url: fileToUrl(file),
@@ -1111,7 +1111,7 @@
         render();
       });
 
-      async function classifyItem(file, dataUrl) {
+      async function classifyItem(file, classifierInput) {
         try {
           const response = await fetch("/api/classify-item", {
             method: "POST",
@@ -1120,7 +1120,8 @@
             },
             body: JSON.stringify({
               fileName: file.name,
-              image: dataUrl
+              image: classifierInput.image,
+              visualHint: classifierInput.visualHint
             })
           });
           const result = await response.json().catch(() => ({}));
@@ -1141,7 +1142,7 @@
         };
       }
 
-      async function makeClassifierImage(file, fallbackDataUrl) {
+      async function makeClassifierInput(file, fallbackDataUrl) {
         try {
           const bitmap = await createImageBitmap(file);
           const maxSide = 512;
@@ -1153,11 +1154,79 @@
           canvas.height = height;
           const context = canvas.getContext("2d");
           context.drawImage(bitmap, 0, 0, width, height);
+          const visualHint = inferVisualItemType(context, width, height);
           bitmap.close?.();
-          return canvas.toDataURL("image/jpeg", 0.78);
+          return {
+            image: canvas.toDataURL("image/jpeg", 0.78),
+            visualHint
+          };
         } catch {
-          return fallbackDataUrl;
+          return {
+            image: fallbackDataUrl,
+            visualHint: null
+          };
         }
+      }
+
+      function inferVisualItemType(context, width, height) {
+        const data = context.getImageData(0, 0, width, height).data;
+        let minX = width;
+        let minY = height;
+        let maxX = -1;
+        let maxY = -1;
+        let count = 0;
+
+        for (let y = 0; y < height; y += 1) {
+          for (let x = 0; x < width; x += 1) {
+            const index = (y * width + x) * 4;
+            const alpha = data[index + 3];
+            if (alpha < 24) {
+              continue;
+            }
+            const red = data[index];
+            const green = data[index + 1];
+            const blue = data[index + 2];
+            const max = Math.max(red, green, blue);
+            const min = Math.min(red, green, blue);
+            const isBackground = red > 232 && green > 232 && blue > 232 && max - min < 20;
+            if (isBackground) {
+              continue;
+            }
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+            count += 1;
+          }
+        }
+
+        if (!count || maxX < minX || maxY < minY) {
+          return null;
+        }
+
+        const boxWidth = maxX - minX + 1;
+        const boxHeight = maxY - minY + 1;
+        const ratio = boxHeight / Math.max(boxWidth, 1);
+        const fill = count / Math.max(boxWidth * boxHeight, 1);
+        if (ratio > 1.32 && fill < 0.72) {
+          return {
+            type: "pants",
+            confidence: 0.72,
+            source: "foreground-shape",
+            ratio: Number(ratio.toFixed(2)),
+            fill: Number(fill.toFixed(2))
+          };
+        }
+        if (ratio < 0.58 && fill < 0.7) {
+          return {
+            type: "shoes",
+            confidence: 0.66,
+            source: "foreground-shape",
+            ratio: Number(ratio.toFixed(2)),
+            fill: Number(fill.toFixed(2))
+          };
+        }
+        return null;
       }
 
       nextButton.addEventListener("click", () => {
