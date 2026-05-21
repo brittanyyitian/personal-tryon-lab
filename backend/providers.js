@@ -473,7 +473,7 @@ function assertSupportedItem(providerId, itemType) {
     return;
   }
 
-  if (["shoes", "bag", "hat"].includes(itemType)) {
+  if (["shoes", "bag", "hat", "accessory"].includes(itemType)) {
     const error = new Error("This VTON model is for garments, not accessories. Use Styled Look with an image-edit provider for shoes, bags, or hats.");
     error.statusCode = 400;
     throw error;

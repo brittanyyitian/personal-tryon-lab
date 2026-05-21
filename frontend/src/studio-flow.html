@@ -386,6 +386,144 @@
         transform: rotate(1deg);
       }
 
+      .board.outfit-board {
+        background: #fbfaf8;
+      }
+
+      .outfit-collage {
+        position: absolute;
+        inset: 5% 31% 5% 4%;
+      }
+
+      .board-model {
+        position: absolute;
+        right: 4%;
+        bottom: 7%;
+        z-index: 4;
+        width: 24%;
+        height: 80%;
+        display: grid;
+        place-items: end center;
+      }
+
+      .board-model img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        filter: contrast(1.03) saturate(0.96);
+      }
+
+      .board-piece {
+        position: absolute;
+        display: grid;
+        place-items: center;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        animation: item-in 240ms ease both;
+        transition: transform 170ms ease, filter 170ms ease;
+      }
+
+      .board-piece:hover {
+        z-index: 9;
+        filter: drop-shadow(0 16px 18px rgba(0, 0, 0, 0.11));
+      }
+
+      .board-piece img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .board-piece-top {
+        left: 6%;
+        top: 12%;
+        z-index: 3;
+        width: 42%;
+        height: 42%;
+        transform: rotate(-1.5deg);
+      }
+
+      .board-piece-pants,
+      .board-piece-skirt {
+        right: 4%;
+        top: 5%;
+        z-index: 1;
+        width: 46%;
+        height: 86%;
+        transform: rotate(1.2deg);
+      }
+
+      .board-piece-dress {
+        left: 18%;
+        top: 6%;
+        z-index: 2;
+        width: 46%;
+        height: 82%;
+      }
+
+      .board-piece-shoes {
+        left: 2%;
+        bottom: 4%;
+        z-index: 5;
+        width: 44%;
+        height: 26%;
+        transform: rotate(-2deg);
+      }
+
+      .board-piece-bag {
+        right: 10%;
+        bottom: 28%;
+        z-index: 5;
+        width: 30%;
+        height: 28%;
+        transform: rotate(1deg);
+      }
+
+      .board-piece-hat {
+        left: 5%;
+        top: 1%;
+        z-index: 6;
+        width: 24%;
+        height: 18%;
+      }
+
+      .board-piece-accessory {
+        right: 2%;
+        top: 31%;
+        z-index: 6;
+        width: 19%;
+        height: 18%;
+      }
+
+      .board-piece-extra-1 {
+        right: 0;
+        bottom: 8%;
+        z-index: 6;
+        width: 22%;
+        height: 20%;
+      }
+
+      .board-piece-extra-2 {
+        left: 0;
+        top: 47%;
+        z-index: 6;
+        width: 22%;
+        height: 20%;
+      }
+
+      .board-piece:hover,
+      .board-piece-top:hover,
+      .board-piece-pants:hover,
+      .board-piece-skirt:hover,
+      .board-piece-dress:hover,
+      .board-piece-shoes:hover,
+      .board-piece-bag:hover,
+      .board-piece-hat:hover,
+      .board-piece-accessory:hover {
+        transform: scale(1.03);
+      }
+
       @keyframes item-in {
         from {
           opacity: 0;
@@ -528,10 +666,10 @@
         cursor: pointer;
       }
 
-      .generation-mode {
+      .look-settings {
         display: flex;
         justify-content: flex-end;
-        margin: 14px 0 6px;
+        margin: 14px 0 -8px;
       }
 
       .mode-menu {
@@ -557,7 +695,7 @@
         top: calc(100% + 8px);
         right: 0;
         z-index: 20;
-        width: 190px;
+        width: 206px;
         display: none;
         padding: 6px;
         border: 1px solid rgba(16, 16, 16, 0.16);
@@ -568,7 +706,21 @@
 
       .mode-menu.is-open .mode-menu-list {
         display: grid;
-        gap: 4px;
+        gap: 7px;
+      }
+
+      .mode-section {
+        display: grid;
+        gap: 3px;
+      }
+
+      .mode-section-label {
+        padding: 4px 7px 0;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
       }
 
       .mode-choice {
@@ -804,6 +956,7 @@
         results: [],
         resultError: "",
         generatingIndex: 0,
+        previewMode: "paper",
         generationMode: "look",
         done: {
           person: false,
@@ -851,7 +1004,8 @@
         ["dress", "Dress"],
         ["shoes", "Shoes"],
         ["bag", "Bag"],
-        ["hat", "Hat"]
+        ["hat", "Hat"],
+        ["accessory", "Accessory"]
       ];
 
       function fileToUrl(file) {
@@ -885,6 +1039,11 @@
               <strong id="boardAction">${copy[state.current].action}</strong>
             </span>
           `;
+          return;
+        }
+
+        if (state.previewMode === "board" && state.items.length > 1) {
+          renderOutfitBoard();
           return;
         }
 
@@ -944,6 +1103,84 @@
         `;
       }
 
+      function renderOutfitBoard() {
+        const pieces = selectBoardItems()
+          .map(({ item, slot }, index) => `
+            <button class="board-piece board-piece-${slot}" data-item-index="${index}" type="button" aria-label="${displayItemType(item.itemType)}">
+              <img src="${item.url}" alt="" />
+            </button>
+          `)
+          .join("");
+
+        board.className = "board outfit-board";
+        board.innerHTML = `
+          <div class="outfit-collage">${pieces}</div>
+          <div class="board-model">
+            <img src="${state.person.url}" alt="" />
+          </div>
+          ${state.resultStatus === "loading" ? `
+            <div class="generation-state">
+              <div class="generation-card">
+                <span class="spinner"></span>
+                <strong>Generating try-on</strong>
+                <span>${generationProgressCopy()}</span>
+              </div>
+            </div>
+          ` : ""}
+          ${state.resultStatus === "done" ? `
+            <div class="result-state">
+              <div class="result-card">
+                <div class="result-grid">
+                  ${state.results.map((result) => `
+                    <div class="result-tile">
+                      <div class="result-frame">
+                        <img src="${result.imageUrl}" alt="" />
+                      </div>
+                      <span>${result.itemName}</span>
+                    </div>
+                  `).join("")}
+                </div>
+                <strong>Try-on study ready</strong>
+              </div>
+            </div>
+          ` : ""}
+          ${state.resultStatus === "error" ? `
+            <div class="result-state">
+              <div class="result-card">
+                <strong>Generation failed</strong>
+                <p class="error-text">${state.resultError}</p>
+              </div>
+            </div>
+          ` : ""}
+        `;
+      }
+
+      function selectBoardItems() {
+        const order = ["pants", "skirt", "dress", "top", "shoes", "bag", "hat", "accessory"];
+        const used = new Set();
+        const selected = [];
+        order.forEach((type) => {
+          const index = state.items.findIndex((item, itemIndex) => item.itemType === type && !used.has(itemIndex));
+          if (index >= 0) {
+            used.add(index);
+            selected.push({
+              item: state.items[index],
+              slot: type
+            });
+          }
+        });
+        state.items.forEach((item, index) => {
+          if (used.has(index)) {
+            return;
+          }
+          selected.push({
+            item,
+            slot: `extra-${Math.min(selected.length, 2)}`
+          });
+        });
+        return selected.slice(0, 8);
+      }
+
       function generationProgressCopy() {
         if (state.generationMode === "look") {
           return `${state.generatingIndex} / ${selectLookItems().length || 1}`;
@@ -962,11 +1199,19 @@
         return state.generationMode === "look" ? "Complete look" : "Separate tests";
       }
 
+      function previewModeLabel() {
+        return state.previewMode === "board" ? "Board" : "Paper";
+      }
+
+      function lookSettingsLabel() {
+        return `${previewModeLabel()} · ${state.generationMode === "look" ? "One look" : "Per item"}`;
+      }
+
       function renderSidePanel() {
         const title = document.querySelector("#itemPanelTitle");
         const copyText = document.querySelector("#itemPanelCopy");
         const panel = document.querySelector("#itemPanel");
-        panel.querySelectorAll(".upload-card, .item-card, .generation-mode").forEach((node) => node.remove());
+        panel.querySelectorAll(".upload-card, .item-card, .look-settings").forEach((node) => node.remove());
         title.textContent = "";
         copyText.textContent = "";
 
@@ -986,31 +1231,22 @@
           return;
         }
 
-        panel.insertAdjacentHTML("beforeend", `
-          <button class="upload-card" id="addItemCard" type="button">
-            <span class="upload-card-icon">+</span>
-            <span>
-              <strong>Add item</strong>
-              <small>Upload another garment or accessory</small>
-            </span>
-          </button>
-        `);
-        document.querySelector("#addItemCard").addEventListener("click", () => {
-          itemsInput.click();
-        });
-
-        if (!state.items.length) {
-          return;
-        }
-
         if (state.items.length > 1) {
           panel.insertAdjacentHTML("beforeend", `
-            <div class="generation-mode">
+            <div class="look-settings">
               <div class="mode-menu" id="generationModeMenu">
-                <button class="mode-menu-button" id="generationModeButton" type="button">${generationModeLabel()} ▾</button>
+                <button class="mode-menu-button" id="generationModeButton" type="button">Look: ${lookSettingsLabel()} ▾</button>
                 <div class="mode-menu-list" role="menu">
-                  <button class="mode-choice ${state.generationMode === "look" ? "is-active" : ""}" data-generation-mode="look" type="button">Complete look</button>
-                  <button class="mode-choice ${state.generationMode === "separate" ? "is-active" : ""}" data-generation-mode="separate" type="button">Separate tests</button>
+                  <div class="mode-section">
+                    <span class="mode-section-label">Preview</span>
+                    <button class="mode-choice ${state.previewMode === "paper" ? "is-active" : ""}" data-preview-mode="paper" type="button">Paper</button>
+                    <button class="mode-choice ${state.previewMode === "board" ? "is-active" : ""}" data-preview-mode="board" type="button">Board</button>
+                  </div>
+                  <div class="mode-section">
+                    <span class="mode-section-label">Output</span>
+                    <button class="mode-choice ${state.generationMode === "look" ? "is-active" : ""}" data-generation-mode="look" type="button">One look</button>
+                    <button class="mode-choice ${state.generationMode === "separate" ? "is-active" : ""}" data-generation-mode="separate" type="button">Per item</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1030,6 +1266,32 @@
               render();
             });
           });
+          panel.querySelectorAll("[data-preview-mode]").forEach((button) => {
+            button.addEventListener("click", () => {
+              state.previewMode = button.dataset.previewMode;
+              state.resultStatus = "idle";
+              state.results = [];
+              state.done.generate = false;
+              render();
+            });
+          });
+        }
+
+        panel.insertAdjacentHTML("beforeend", `
+          <button class="upload-card" id="addItemCard" type="button">
+            <span class="upload-card-icon">+</span>
+            <span>
+              <strong>Add item</strong>
+              <small>Upload another garment or accessory</small>
+            </span>
+          </button>
+        `);
+        document.querySelector("#addItemCard").addEventListener("click", () => {
+          itemsInput.click();
+        });
+
+        if (!state.items.length) {
+          return;
         }
 
         state.items.forEach((item, index) => {
@@ -1379,6 +1641,15 @@
             autoNormalize: false,
             remoteEnabled: true,
             consentAccepted: true,
+            previewMode: state.previewMode,
+            generationMode: state.generationMode,
+            outfitItems: state.items.map((outfitItem) => ({
+              name: outfitItem.name,
+              itemType: outfitItem.itemType,
+              source: outfitItem.source,
+              label: outfitItem.label,
+              classifierSource: outfitItem.classifierSource
+            })),
             personImage,
             garmentImage: item.dataUrl
           })
