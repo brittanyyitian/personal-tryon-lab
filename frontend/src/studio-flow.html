@@ -529,32 +529,66 @@
       }
 
       .generation-mode {
-        display: grid;
-        gap: 8px;
-        margin-top: 18px;
+        display: flex;
+        justify-content: flex-end;
+        margin: 14px 0 6px;
       }
 
-      .mode-select {
-        width: 100%;
-        min-height: 52px;
-        padding: 0 14px;
-        border: 1px solid rgba(16, 16, 16, 0.16);
-        border-radius: 8px;
-        background: rgba(255, 255, 255, 0.42);
+      .mode-menu {
+        position: relative;
+      }
+
+      .mode-menu-button {
+        min-height: 34px;
+        padding: 0 12px;
+        border: 1px solid rgba(16, 16, 16, 0.2);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.58);
         color: var(--ink);
-        font-size: 12px;
+        font-size: 10px;
         font-weight: 900;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
         cursor: pointer;
       }
 
-      .mode-note {
-        color: var(--muted);
+      .mode-menu-list {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        z-index: 20;
+        width: 190px;
+        display: none;
+        padding: 6px;
+        border: 1px solid rgba(16, 16, 16, 0.16);
+        border-radius: 8px;
+        background: rgba(251, 250, 248, 0.96);
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.08);
+      }
+
+      .mode-menu.is-open .mode-menu-list {
+        display: grid;
+        gap: 4px;
+      }
+
+      .mode-choice {
+        width: 100%;
+        min-height: 34px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--ink);
         font-size: 10px;
         font-weight: 900;
-        line-height: 1.45;
+        letter-spacing: 0.08em;
+        text-align: left;
         text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .mode-choice.is-active,
+      .mode-choice:hover {
+        background: #efefec;
       }
 
       .remove-button {
@@ -924,6 +958,10 @@
         return "Generate a separate study for each uploaded item.";
       }
 
+      function generationModeLabel() {
+        return state.generationMode === "look" ? "Complete look" : "Separate tests";
+      }
+
       function renderSidePanel() {
         const title = document.querySelector("#itemPanelTitle");
         const copyText = document.querySelector("#itemPanelCopy");
@@ -967,20 +1005,29 @@
 
         panel.insertAdjacentHTML("beforeend", `
           <div class="generation-mode">
-            <select class="mode-select" id="generationModeSelect" aria-label="Generation mode">
-              <option value="look" ${state.generationMode === "look" ? "selected" : ""}>Complete look</option>
-              <option value="separate" ${state.generationMode === "separate" ? "selected" : ""}>Separate tests</option>
-            </select>
-            <span class="mode-note" id="generationModeNote">${generationModeNote()}</span>
+            <div class="mode-menu" id="generationModeMenu">
+              <button class="mode-menu-button" id="generationModeButton" type="button">${generationModeLabel()} ▾</button>
+              <div class="mode-menu-list" role="menu">
+                <button class="mode-choice ${state.generationMode === "look" ? "is-active" : ""}" data-generation-mode="look" type="button">Complete look</button>
+                <button class="mode-choice ${state.generationMode === "separate" ? "is-active" : ""}" data-generation-mode="separate" type="button">Separate tests</button>
+              </div>
+            </div>
           </div>
         `);
 
-        document.querySelector("#generationModeSelect").addEventListener("change", (event) => {
-          state.generationMode = event.target.value;
-          state.resultStatus = "idle";
-          state.results = [];
-          state.done.generate = false;
-          render();
+        const modeMenu = document.querySelector("#generationModeMenu");
+        document.querySelector("#generationModeButton").addEventListener("click", (event) => {
+          event.stopPropagation();
+          modeMenu.classList.toggle("is-open");
+        });
+        panel.querySelectorAll("[data-generation-mode]").forEach((button) => {
+          button.addEventListener("click", () => {
+            state.generationMode = button.dataset.generationMode;
+            state.resultStatus = "idle";
+            state.results = [];
+            state.done.generate = false;
+            render();
+          });
         });
 
         state.items.forEach((item, index) => {
