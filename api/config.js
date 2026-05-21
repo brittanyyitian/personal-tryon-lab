@@ -1,4 +1,5 @@
 const { keyStatus, loadEnv } = require("../backend/config");
+const { isBackgroundRemovalConfigured, removeBgModel } = require("../backend/background-removal");
 const { sendJson, sendMethodNotAllowed } = require("./_utils");
 
 loadEnv();
@@ -20,6 +21,11 @@ module.exports = function handler(request, response) {
       remoteEnabled: Boolean(process.env.HF_TOKEN || process.env.HF_CLASSIFIER_REMOTE === "true"),
       hasHfToken: Boolean(process.env.HF_TOKEN),
       models: classifierModels.split(",").map((model) => model.trim()).filter(Boolean)
+    },
+    backgroundRemoval: {
+      remoteEnabled: isBackgroundRemovalConfigured(),
+      hasHfToken: Boolean(process.env.HF_TOKEN),
+      model: removeBgModel()
     },
     supabase: {
       enabled: Boolean(supabaseUrl && serviceRoleKey),

@@ -1064,6 +1064,34 @@
         }
       }
 
+      async function removeItemBackground(dataUrl) {
+        try {
+          const response = await fetch("/api/remove-bg", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              image: dataUrl
+            })
+          });
+          const result = await response.json().catch(() => ({}));
+          if (response.ok && result.imageUrl) {
+            return {
+              displayUrl: result.imageUrl,
+              backgroundSource: result.source || "remove-bg"
+            };
+          }
+        } catch {
+          // Keep upload responsive if the cutout service is unavailable.
+        }
+
+        return {
+          displayUrl: await makeDisplayImage(dataUrl),
+          backgroundSource: "crop-fallback"
+        };
+      }
+
       function findForegroundBox(data, width, height) {
         const sampleSize = Math.max(6, Math.round(Math.min(width, height) * 0.035));
         const background = sampleBackgroundColor(data, width, height, sampleSize);
@@ -1519,13 +1547,16 @@
         }
         const items = await Promise.all(files.map(async (file) => {
           const dataUrl = await fileToDataUrl(file);
-          const displayUrl = await makeDisplayImage(dataUrl);
-          const classifierInput = await makeClassifierInput(file, dataUrl);
+          const removalInput = await makeDisplayImage(dataUrl);
+          const removed = await removeItemBackground(removalInput);
+          const displayUrl = removed.displayUrl;
+          const classifierInput = await makeClassifierInput(displayUrl);
           const classified = await classifyItem(file, classifierInput);
           return {
             name: file.name,
             url: fileToUrl(file),
             displayUrl,
+            backgroundSource: removed.backgroundSource,
             dataUrl,
             itemType: classified.type,
             source: "on-model",
@@ -1582,27 +1613,28 @@
         };
       }
 
-      async function makeClassifierInput(file, fallbackDataUrl) {
+      async function makeClassifierInput(dataUrl) {
         try {
-          const bitmap = await createImageBitmap(file);
+          const image = await loadDataImage(dataUrl);
           const maxSide = 512;
-          const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
-          const width = Math.max(1, Math.round(bitmap.width * scale));
-          const height = Math.max(1, Math.round(bitmap.height * scale));
+          const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+          const width = Math.max(1, Math.round(image.naturalWidth * scale));
+          const height = Math.max(1, Math.round(image.naturalHeight * scale));
           const canvas = document.createElement("canvas");
           canvas.width = width;
           canvas.height = height;
           const context = canvas.getContext("2d");
-          context.drawImage(bitmap, 0, 0, width, height);
+          context.fillStyle = "#ffffff";
+          context.fillRect(0, 0, width, height);
+          context.drawImage(image, 0, 0, width, height);
           const visualHint = inferVisualItemType(context, width, height);
-          bitmap.close?.();
           return {
             image: canvas.toDataURL("image/jpeg", 0.78),
             visualHint
           };
         } catch {
           return {
-            image: fallbackDataUrl,
+            image: dataUrl,
             visualHint: null
           };
         }

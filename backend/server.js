@@ -2,6 +2,7 @@ const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
 const { keyStatus, loadEnv } = require("./config");
+const { isBackgroundRemovalConfigured, removeBgModel, removeImageBackground } = require("./background-removal");
 const { classifyItemImage } = require("./item-classifier");
 const { runTryonJob } = require("./tryon-handler");
 
@@ -35,6 +36,11 @@ const server = http.createServer(async (request, response) => {
           remoteEnabled: Boolean(process.env.HF_TOKEN || process.env.HF_CLASSIFIER_REMOTE === "true"),
           hasHfToken: Boolean(process.env.HF_TOKEN),
           models: classifierModels.split(",").map((model) => model.trim()).filter(Boolean)
+        },
+        backgroundRemoval: {
+          remoteEnabled: isBackgroundRemovalConfigured(),
+          hasHfToken: Boolean(process.env.HF_TOKEN),
+          model: removeBgModel()
         }
       });
       return;
@@ -50,6 +56,13 @@ const server = http.createServer(async (request, response) => {
     if (url.pathname === "/api/classify-item" && request.method === "POST") {
       const payload = await readJsonBody(request);
       const result = await classifyItemImage(payload);
+      sendJson(response, 200, result);
+      return;
+    }
+
+    if (url.pathname === "/api/remove-bg" && request.method === "POST") {
+      const payload = await readJsonBody(request);
+      const result = await removeImageBackground(payload.image);
       sendJson(response, 200, result);
       return;
     }
