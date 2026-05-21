@@ -1003,32 +1003,34 @@
           return;
         }
 
-        panel.insertAdjacentHTML("beforeend", `
-          <div class="generation-mode">
-            <div class="mode-menu" id="generationModeMenu">
-              <button class="mode-menu-button" id="generationModeButton" type="button">${generationModeLabel()} ▾</button>
-              <div class="mode-menu-list" role="menu">
-                <button class="mode-choice ${state.generationMode === "look" ? "is-active" : ""}" data-generation-mode="look" type="button">Complete look</button>
-                <button class="mode-choice ${state.generationMode === "separate" ? "is-active" : ""}" data-generation-mode="separate" type="button">Separate tests</button>
+        if (state.items.length > 1) {
+          panel.insertAdjacentHTML("beforeend", `
+            <div class="generation-mode">
+              <div class="mode-menu" id="generationModeMenu">
+                <button class="mode-menu-button" id="generationModeButton" type="button">${generationModeLabel()} ▾</button>
+                <div class="mode-menu-list" role="menu">
+                  <button class="mode-choice ${state.generationMode === "look" ? "is-active" : ""}" data-generation-mode="look" type="button">Complete look</button>
+                  <button class="mode-choice ${state.generationMode === "separate" ? "is-active" : ""}" data-generation-mode="separate" type="button">Separate tests</button>
+                </div>
               </div>
             </div>
-          </div>
-        `);
+          `);
 
-        const modeMenu = document.querySelector("#generationModeMenu");
-        document.querySelector("#generationModeButton").addEventListener("click", (event) => {
-          event.stopPropagation();
-          modeMenu.classList.toggle("is-open");
-        });
-        panel.querySelectorAll("[data-generation-mode]").forEach((button) => {
-          button.addEventListener("click", () => {
-            state.generationMode = button.dataset.generationMode;
-            state.resultStatus = "idle";
-            state.results = [];
-            state.done.generate = false;
-            render();
+          const modeMenu = document.querySelector("#generationModeMenu");
+          document.querySelector("#generationModeButton").addEventListener("click", (event) => {
+            event.stopPropagation();
+            modeMenu.classList.toggle("is-open");
           });
-        });
+          panel.querySelectorAll("[data-generation-mode]").forEach((button) => {
+            button.addEventListener("click", () => {
+              state.generationMode = button.dataset.generationMode;
+              state.resultStatus = "idle";
+              state.results = [];
+              state.done.generate = false;
+              render();
+            });
+          });
+        }
 
         state.items.forEach((item, index) => {
           panel.insertAdjacentHTML("beforeend", `
