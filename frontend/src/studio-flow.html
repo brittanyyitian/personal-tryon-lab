@@ -1199,7 +1199,8 @@
           type: "top",
           label: "Ivory Summer Top",
           productUrl: "./assets/library/ivory-summer-top-product-v1.png",
-          modelUrl: "./assets/library/ivory-summer-top-editorial-v1.png"
+          modelUrl: "./assets/library/ivory-summer-top-editorial-v1.png",
+          tryonUrl: "./assets/library/ivory-summer-top-product-v1.png"
         }
       ];
 
@@ -1541,7 +1542,8 @@
         const image = libraryItem
           ? (state.libraryDisplayMode === "product" ? libraryItem.productUrl : libraryItem.modelUrl)
           : placeholderItemImage(type);
-        const dataUrl = libraryItem ? await urlToDataUrl(libraryItem.productUrl) : image;
+        const tryonUrl = libraryItem?.tryonUrl || libraryItem?.productUrl || image;
+        const dataUrl = libraryItem ? await urlToDataUrl(tryonUrl) : image;
         const label = libraryItem?.label || displayItemType(type);
         const id = state.items.length + 1;
         state.items.push({
@@ -1550,6 +1552,7 @@
           displayUrl: image,
           productUrl: libraryItem?.productUrl || image,
           modelUrl: libraryItem?.modelUrl || image,
+          tryonUrl,
           displayMode: libraryItem ? state.libraryDisplayMode : "product",
           backgroundSource: libraryItem ? "library" : "library-placeholder",
           dataUrl,
