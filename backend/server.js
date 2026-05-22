@@ -116,9 +116,12 @@ function serveStatic(url, response) {
 
     const ext = path.extname(filePath).toLowerCase();
     const isAsset = filePath.includes(`${path.sep}assets${path.sep}`);
+    const isLibraryAsset = filePath.includes(`${path.sep}assets${path.sep}library${path.sep}`);
     response.writeHead(200, {
       "Content-Type": mimeTypes[ext] || "application/octet-stream",
-      "Cache-Control": isAsset ? "public, max-age=86400" : "no-store"
+      "Cache-Control": isLibraryAsset
+        ? "public, max-age=31536000, immutable"
+        : isAsset ? "public, max-age=86400" : "no-store"
     });
     response.end(data);
   });

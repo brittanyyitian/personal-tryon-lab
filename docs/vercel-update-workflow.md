@@ -52,6 +52,8 @@ For static assets, check their deployed paths directly:
 curl -I https://ai-tryon-lab.vercel.app/assets/library/example.png
 ```
 
+Library item images use versioned filenames, for example `item-name-product-v1.png`, and are served with a long immutable browser cache. If an image changes, add a new versioned filename such as `item-name-product-v2.png` and update the reference in `studio-flow.html`. Do not overwrite an existing versioned image with different content.
+
 ## If The New Version Is Not Live Yet
 
 1. Confirm the commit was pushed:
@@ -72,4 +74,3 @@ If local `curl` fails with DNS resolution inside Codex, retry with network appro
 ```text
 https://ai-tryon-lab.vercel.app
 ```
-
