@@ -1201,6 +1201,8 @@
           label: "Ivory Summer Top",
           productUrl: "./assets/library/ivory-summer-top-product-v1.png",
           modelUrl: "./assets/library/ivory-summer-top-editorial-v1.png",
+          productThumbUrl: "./assets/library/ivory-summer-top-product-thumb-v1.jpg",
+          modelThumbUrl: "./assets/library/ivory-summer-top-editorial-thumb-v1.jpg",
           tryonUrl: "./assets/library/ivory-summer-top-product-v1.png"
         },
         {
@@ -1209,6 +1211,8 @@
           label: "Off Shoulder Cotton Blouse",
           productUrl: "./assets/library/off-shoulder-cotton-blouse-product-v1.png",
           modelUrl: "./assets/library/off-shoulder-cotton-blouse-editorial-v1.png",
+          productThumbUrl: "./assets/library/off-shoulder-cotton-blouse-product-thumb-v1.jpg",
+          modelThumbUrl: "./assets/library/off-shoulder-cotton-blouse-editorial-thumb-v1.jpg",
           tryonUrl: "./assets/library/off-shoulder-cotton-blouse-product-v1.png"
         },
         {
@@ -1217,6 +1221,8 @@
           label: "Puff Sleeve Summer Blouse",
           productUrl: "./assets/library/puff-sleeve-summer-blouse-product-v1.png",
           modelUrl: "./assets/library/puff-sleeve-summer-blouse-editorial-v1.png",
+          productThumbUrl: "./assets/library/puff-sleeve-summer-blouse-product-thumb-v1.jpg",
+          modelThumbUrl: "./assets/library/puff-sleeve-summer-blouse-editorial-thumb-v1.jpg",
           tryonUrl: "./assets/library/puff-sleeve-summer-blouse-product-v1.png"
         },
         {
@@ -1225,6 +1231,8 @@
           label: "Structured Puff Sleeve Top",
           productUrl: "./assets/library/structured-puff-sleeve-top-product-v1.png",
           modelUrl: "./assets/library/structured-puff-sleeve-top-editorial-v1.png",
+          productThumbUrl: "./assets/library/structured-puff-sleeve-top-product-thumb-v1.jpg",
+          modelThumbUrl: "./assets/library/structured-puff-sleeve-top-editorial-thumb-v1.jpg",
           tryonUrl: "./assets/library/structured-puff-sleeve-top-product-v1.png"
         }
       ];
@@ -1520,66 +1528,26 @@
         return (itemTypes.find(([value]) => value === type) || itemTypes[0])[1];
       }
 
-      function placeholderItemImage(type) {
-        const canvas = document.createElement("canvas");
-        canvas.width = 520;
-        canvas.height = 520;
-        const context = canvas.getContext("2d");
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.fillStyle = "#dedbd4";
-        context.strokeStyle = "#c9c5bd";
-        context.lineWidth = 10;
-
-        if (type === "pants") {
-          context.beginPath();
-          context.roundRect(180, 58, 160, 390, 34);
-          context.fill();
-          context.clearRect(252, 170, 16, 280);
-          context.strokeRect(180, 58, 160, 390);
-        } else if (type === "shoes") {
-          context.beginPath();
-          context.ellipse(260, 308, 150, 52, -0.08, 0, Math.PI * 2);
-          context.fill();
-          context.stroke();
-        } else if (type === "bag") {
-          context.beginPath();
-          context.roundRect(150, 210, 220, 150, 28);
-          context.fill();
-          context.stroke();
-          context.beginPath();
-          context.arc(260, 214, 70, Math.PI, Math.PI * 2);
-          context.stroke();
-        } else {
-          context.beginPath();
-          context.roundRect(150, 132, 220, 230, 28);
-          context.fill();
-          context.stroke();
-          context.clearRect(116, 158, 58, 86);
-          context.clearRect(346, 158, 58, 86);
-        }
-
-        return canvas.toDataURL("image/png");
-      }
-
       async function addLibraryItem(value) {
         const libraryItem = libraryItems.find((item) => item.id === value);
-        const type = libraryItem?.type || value;
-        const image = libraryItem
-          ? (state.libraryDisplayMode === "product" ? libraryItem.productUrl : libraryItem.modelUrl)
-          : placeholderItemImage(type);
-        const tryonUrl = libraryItem?.tryonUrl || libraryItem?.productUrl || image;
-        const dataUrl = libraryItem ? await urlToDataUrl(tryonUrl) : image;
-        const label = libraryItem?.label || displayItemType(type);
+        if (!libraryItem) {
+          return;
+        }
+        const type = libraryItem.type;
+        const image = state.libraryDisplayMode === "product" ? libraryItem.productUrl : libraryItem.modelUrl;
+        const tryonUrl = libraryItem.tryonUrl || libraryItem.productUrl;
+        const dataUrl = await urlToDataUrl(tryonUrl);
+        const label = libraryItem.label;
         const id = state.items.length + 1;
         state.items.push({
-          name: libraryItem ? `${libraryItem.id}-${id}.png` : `library-${type}-${id}.png`,
+          name: `${libraryItem.id}-${id}.png`,
           url: image,
           displayUrl: image,
-          productUrl: libraryItem?.productUrl || image,
-          modelUrl: libraryItem?.modelUrl || image,
+          productUrl: libraryItem.productUrl,
+          modelUrl: libraryItem.modelUrl,
           tryonUrl,
-          displayMode: libraryItem ? state.libraryDisplayMode : "product",
-          backgroundSource: libraryItem ? "library" : "library-placeholder",
+          displayMode: state.libraryDisplayMode,
+          backgroundSource: "library",
           dataUrl,
           itemType: type,
           source: "library",
@@ -1803,12 +1771,14 @@
         }
 
         const libraryRealItems = libraryItems.map((item) => {
-          const imageUrl = state.libraryDisplayMode === "product" ? item.productUrl : item.modelUrl;
+          const imageUrl = state.libraryDisplayMode === "product"
+            ? (item.productThumbUrl || item.productUrl)
+            : (item.modelThumbUrl || item.modelUrl);
           const imageLabel = state.libraryDisplayMode === "product" ? "product view" : "model view";
           return `
           <article class="library-card">
             <div class="library-tile library-item-tile">
-              <img class="library-preview-image library-preview-image-${state.libraryDisplayMode}" src="${imageUrl}" alt="${item.label} ${imageLabel}" />
+              <img class="library-preview-image library-preview-image-${state.libraryDisplayMode}" src="${imageUrl}" alt="${item.label} ${imageLabel}" loading="lazy" decoding="async" />
               <button class="library-add-button" data-library-id="${item.id}" type="button">Add to board</button>
             </div>
             <span class="library-item-name">${item.label}</span>
@@ -1824,9 +1794,6 @@
           </div>
           <div class="library-grid">
             ${libraryRealItems}
-            <button class="library-tile" data-library-type="pants" data-type="pants" type="button"><span>Pants</span></button>
-            <button class="library-tile" data-library-type="shoes" data-type="shoes" type="button"><span>Shoes</span></button>
-            <button class="library-tile" data-library-type="bag" data-type="bag" type="button"><span>Bag</span></button>
           </div>
         ` : state.itemSource === "upload" ? `
           <button class="upload-card" id="addItemCard" type="button">
@@ -1890,11 +1857,6 @@
         panel.querySelectorAll("[data-library-id]").forEach((button) => {
           button.addEventListener("click", async () => {
             await addLibraryItem(button.dataset.libraryId);
-          });
-        });
-        panel.querySelectorAll("[data-library-type]").forEach((button) => {
-          button.addEventListener("click", async () => {
-            await addLibraryItem(button.dataset.libraryType);
           });
         });
         const addItemCard = document.querySelector("#addItemCard");
