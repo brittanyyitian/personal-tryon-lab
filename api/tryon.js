@@ -18,6 +18,7 @@ module.exports = async function handler(request, response) {
     sendJson(response, error.statusCode || 500, {
       error: error.message || "Server error",
       jobId: error.jobId || null,
+      persistenceWarnings: error.persistenceWarnings || [],
       details: error.details
     });
   }
