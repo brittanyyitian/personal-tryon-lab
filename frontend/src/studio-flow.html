@@ -411,16 +411,16 @@
 
       .outfit-collage {
         position: absolute;
-        inset: 5% 31% 5% 4%;
+        inset: 8% 34% 9% 6%;
       }
 
       .board-model {
         position: absolute;
-        right: 4%;
-        bottom: 7%;
+        right: 6%;
+        bottom: 10%;
         z-index: 4;
-        width: 24%;
-        height: 80%;
+        width: 28%;
+        height: 72%;
         display: grid;
         place-items: end center;
       }
@@ -452,83 +452,141 @@
         width: 100%;
         height: 100%;
         object-fit: contain;
+        filter: drop-shadow(0 18px 18px rgba(0, 0, 0, 0.08));
       }
 
       .board-piece-top {
         left: 6%;
-        top: 12%;
+        top: 10%;
         z-index: 3;
-        width: 42%;
-        height: 42%;
+        width: 34%;
+        height: 34%;
         transform: rotate(-1.5deg);
       }
 
       .board-piece-pants,
       .board-piece-skirt {
-        right: 4%;
-        top: 5%;
+        left: 2%;
+        top: 10%;
         z-index: 1;
-        width: 46%;
-        height: 86%;
+        width: 38%;
+        height: 74%;
         transform: rotate(1.2deg);
       }
 
       .board-piece-dress {
-        left: 18%;
-        top: 6%;
+        left: 8%;
+        top: 7%;
         z-index: 2;
-        width: 46%;
-        height: 82%;
+        width: 40%;
+        height: 76%;
       }
 
       .board-piece-shoes {
-        left: 2%;
-        bottom: 4%;
+        left: 42%;
+        bottom: 7%;
         z-index: 5;
-        width: 44%;
-        height: 26%;
+        width: 28%;
+        height: 22%;
         transform: rotate(-2deg);
       }
 
       .board-piece-bag {
-        right: 10%;
-        bottom: 28%;
+        left: 41%;
+        bottom: 31%;
         z-index: 5;
-        width: 30%;
-        height: 28%;
+        width: 24%;
+        height: 24%;
         transform: rotate(1deg);
       }
 
       .board-piece-hat {
-        left: 5%;
+        left: 4%;
         top: 1%;
         z-index: 6;
-        width: 24%;
-        height: 18%;
+        width: 20%;
+        height: 16%;
       }
 
       .board-piece-accessory {
-        right: 2%;
-        top: 31%;
+        left: 46%;
+        top: 44%;
         z-index: 6;
-        width: 19%;
-        height: 18%;
+        width: 18%;
+        height: 16%;
       }
 
       .board-piece-extra-1 {
-        right: 0;
-        bottom: 8%;
+        left: 39%;
+        top: 9%;
         z-index: 6;
-        width: 22%;
-        height: 20%;
+        width: 24%;
+        height: 22%;
       }
 
       .board-piece-extra-2 {
-        left: 0;
-        top: 47%;
+        left: 38%;
+        bottom: 9%;
         z-index: 6;
-        width: 22%;
-        height: 20%;
+        width: 24%;
+        height: 22%;
+      }
+
+      .outfit-board-1 .outfit-collage {
+        inset: 11% 40% 12% 8%;
+      }
+
+      .outfit-board-1 .board-piece {
+        left: 4%;
+        top: 12%;
+        width: 44%;
+        height: 66%;
+        transform: rotate(-1deg);
+      }
+
+      .outfit-board-1 .board-model {
+        right: 8%;
+        bottom: 13%;
+        width: 30%;
+        height: 66%;
+      }
+
+      .outfit-board-2 .board-piece-top {
+        left: 9%;
+        top: 12%;
+        width: 32%;
+        height: 34%;
+      }
+
+      .outfit-board-2 .board-piece-pants,
+      .outfit-board-2 .board-piece-skirt {
+        left: 7%;
+        top: 18%;
+        width: 34%;
+        height: 68%;
+      }
+
+      .outfit-board-2 .board-piece-extra-1,
+      .outfit-board-2 .board-piece-accessory {
+        left: 43%;
+        top: 48%;
+        width: 26%;
+        height: 24%;
+      }
+
+      .board-piece-label {
+        position: absolute;
+        left: 50%;
+        bottom: -7px;
+        transform: translateX(-50%);
+        padding: 6px 10px;
+        background: rgba(255, 255, 255, 0.92);
+        color: var(--ink);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        white-space: nowrap;
       }
 
       .board-piece:hover,
@@ -869,6 +927,26 @@
         gap: 14px;
       }
 
+      .selected-items.is-compact {
+        margin-top: 18px;
+        gap: 10px;
+      }
+
+      .selected-items.is-compact .selected-item-card {
+        min-height: 84px;
+        grid-template-columns: 34px 48px 1fr;
+        padding: 12px;
+      }
+
+      .selected-items.is-compact .selected-item-index {
+        font-size: 27px;
+      }
+
+      .selected-items.is-compact .selected-item-thumb {
+        width: 48px;
+        height: 48px;
+      }
+
       .selected-item-card {
         display: grid;
         grid-template-columns: 46px 62px 1fr 32px;
@@ -936,6 +1014,53 @@
       .look-settings {
         display: grid;
         gap: 8px;
+      }
+
+      .output-options {
+        display: grid;
+        gap: 12px;
+      }
+
+      .output-choice {
+        width: 100%;
+        min-height: 86px;
+        display: grid;
+        gap: 7px;
+        align-content: center;
+        padding: 18px 20px;
+        border: 1px solid rgba(16, 16, 16, 0.14);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.52);
+        color: var(--ink);
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .output-choice.is-active {
+        border-color: var(--ink);
+        background: #fff;
+      }
+
+      .output-choice strong,
+      .output-choice span {
+        display: block;
+      }
+
+      .output-choice strong {
+        font-size: 14px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .output-choice span {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .result-side-button {
+        margin-top: 4px;
       }
 
       .mode-menu {
@@ -1160,9 +1285,9 @@
             <b>02</b>
             <span><strong>Items</strong><span>Add garments, shoes, bags, and accessories.</span></span>
           </button>
-          <button class="step" type="button" data-step="generate">
+          <button class="step" type="button" data-step="output">
             <b>03</b>
-            <span><strong>Generate</strong><span>Review the look and run the try-on.</span></span>
+            <span><strong>Output</strong><span>Choose the final result style.</span></span>
           </button>
         </nav>
         <div class="rail-action">
@@ -1201,7 +1326,7 @@
     <input class="upload-input" id="itemsInput" type="file" accept="image/*" multiple />
 
     <script>
-      const steps = ["person", "items", "generate"];
+      const steps = ["person", "items", "output"];
       const state = {
         current: "person",
         person: null,
@@ -1214,10 +1339,11 @@
         libraryDisplayMode: "model",
         previewMode: "paper",
         generationMode: "look",
+        outputMode: "tryon",
         done: {
           person: false,
           items: false,
-          generate: false
+          output: false
         }
       };
 
@@ -1238,13 +1364,21 @@
           action: "Click to add items",
           progress: "Upload one or more product images."
         },
-        generate: {
-          title: "Generate",
+        output: {
+          title: "Output",
           status: "Ready to generate",
           done: "Ready to generate",
-          hint: "Step 3 · Review look",
-          action: "Review selection",
-          progress: "Everything is ready. Generate is the final action."
+          hint: "Step 3 · Choose output",
+          action: "Review result style",
+          progress: "Choose an output mode, then generate."
+        },
+        result: {
+          title: "Result",
+          status: "Generated",
+          done: "Generated",
+          hint: "Result",
+          action: "Review result",
+          progress: "Review the result or try again."
         }
       };
 
@@ -1378,7 +1512,7 @@
 
       async function removeItemBackground(dataUrl) {
         try {
-          const response = await fetch("/api/remove-bg", {
+          const response = await fetch(apiUrl("/api/remove-bg"), {
             method: "POST",
             headers: {
               "Content-Type": "application/json"
@@ -1625,7 +1759,7 @@
           classifierSource: "library"
         });
         state.done.items = true;
-        state.current = "generate";
+        state.current = "items";
         state.resultStatus = "idle";
         state.results = [];
         state.resultError = "";
@@ -1645,7 +1779,7 @@
           return;
         }
 
-        if (state.previewMode === "board" && state.items.length > 1) {
+        if (state.previewMode === "board" && state.items.length > 0) {
           renderOutfitBoard();
           return;
         }
@@ -1679,7 +1813,7 @@
               </div>
             </div>
           ` : ""}
-          ${state.resultStatus === "done" ? `
+          ${state.resultStatus === "done" && state.results.length ? `
             <div class="result-state">
               <div class="result-card">
                 <div class="result-grid">
@@ -1708,16 +1842,18 @@
       }
 
       function renderOutfitBoard() {
-        const pieces = selectBoardItems()
+        const boardItems = selectBoardItems();
+        const pieces = boardItems
           .map(({ item, itemIndex, slot }) => `
             <div class="board-piece board-piece-${slot}" data-item-index="${itemIndex}" aria-label="${displayItemType(item.itemType)}">
               <button class="paper-remove" data-remove-board-item="${itemIndex}" type="button" aria-label="Remove ${item.label}">×</button>
               <img src="${item.displayUrl || item.url}" alt="" />
+              <span class="board-piece-label">${displayItemType(item.itemType)}</span>
             </div>
           `)
           .join("");
 
-        board.className = "board outfit-board";
+        board.className = `board outfit-board outfit-board-${Math.min(boardItems.length, 4)}`;
         board.innerHTML = `
           <div class="outfit-collage">${pieces}</div>
           <div class="board-model">
@@ -1732,7 +1868,7 @@
               </div>
             </div>
           ` : ""}
-          ${state.resultStatus === "done" ? `
+          ${state.resultStatus === "done" && state.results.length ? `
             <div class="result-state">
               <div class="result-card">
                 <div class="result-grid">
@@ -1816,9 +1952,6 @@
 
       function renderSidePanel() {
         const panel = document.querySelector("#itemPanel");
-        if (state.itemSource === "library") {
-          state.itemSource = "upload";
-        }
 
         if (state.current === "person") {
           panel.innerHTML = `
@@ -1843,32 +1976,22 @@
           return;
         }
 
-        const libraryRealItems = libraryItems.map((item) => {
-          const imageUrl = state.libraryDisplayMode === "product"
-            ? (item.productThumbUrl || item.productUrl)
-            : (item.modelThumbUrl || item.modelUrl);
-          const imageLabel = state.libraryDisplayMode === "product" ? "product view" : "model view";
-          return `
-          <article class="library-card">
-            <div class="library-tile library-item-tile">
-              <img class="library-preview-image library-preview-image-${state.libraryDisplayMode}" src="${imageUrl}" alt="${item.label} ${imageLabel}" loading="lazy" decoding="async" />
-              <button class="library-add-button" data-library-id="${item.id}" type="button">Add to board</button>
-            </div>
-            <span class="library-item-name">${item.label}</span>
-          </article>
-        `;
-        }).join("");
-        const sourceBody = state.itemSource === "library" ? `
-          <div class="library-toolbar">
-            <div class="library-view-toggle" aria-label="Library display mode">
-              <button class="${state.libraryDisplayMode === "model" ? "is-active" : ""}" data-library-display-mode="model" type="button">Model</button>
-              <button class="${state.libraryDisplayMode === "product" ? "is-active" : ""}" data-library-display-mode="product" type="button">Product</button>
-            </div>
-          </div>
-          <div class="library-grid">
-            ${libraryRealItems}
-          </div>
-        ` : state.itemSource === "upload" ? `
+        if (state.current === "output") {
+          renderOutputPanel(panel);
+          return;
+        }
+
+        if (state.current === "result") {
+          renderResultPanel(panel);
+          return;
+        }
+
+        renderItemsPanel(panel);
+      }
+
+      function renderItemsPanel(panel) {
+        panel.innerHTML = `
+          <h3 class="side-title">Items</h3>
           <button class="upload-card" id="addItemCard" type="button">
             <span class="upload-card-icon">+</span>
             <span>
@@ -1876,82 +1999,9 @@
               <small>Upload image</small>
             </span>
           </button>
-        ` : `
-          <button class="upload-card" type="button">
-            <span class="upload-card-icon">+</span>
-            <span>
-              <strong>Product link</strong>
-              <small>Coming next</small>
-            </span>
-          </button>
-        `;
-        const selectedItems = state.items.length ? `
-          <div class="selected-items" aria-label="Selected items">
-            ${state.items.map((item, index) => `
-              <article class="selected-item-card">
-                <span class="selected-item-index">${String(index + 1).padStart(2, "0")}</span>
-                <img class="selected-item-thumb" src="${item.displayUrl || item.url}" alt="" />
-                <span class="selected-item-copy">
-                  <strong>${displayItemType(item.itemType)}</strong>
-                  <small>${item.classifierSource === "fallback" || item.itemType === "unknown" ? "Manual check needed" : `Auto · ${item.classifierSource || "visual"}`}</small>
-                  <select class="item-type-select" data-item-type-index="${index}" aria-label="Item type">
-                    ${itemTypes.map(([value, label]) => `
-                      <option value="${value}" ${item.itemType === value ? "selected" : ""}>${label}</option>
-                    `).join("")}
-                  </select>
-                </span>
-                <button class="selected-remove" data-remove-item="${index}" type="button" aria-label="Remove item">×</button>
-              </article>
-            `).join("")}
-          </div>
-        ` : "";
-
-        panel.innerHTML = `
-          <div class="source-tabs">
-            <button class="source-tab ${state.itemSource === "upload" ? "is-active" : ""}" data-item-source="upload" type="button">Upload</button>
-            <button class="source-tab ${state.itemSource === "link" ? "is-active" : ""}" data-item-source="link" type="button">Link</button>
-          </div>
-          ${sourceBody}
-          ${state.items.length > 1 ? `
-            <div class="look-settings">
-              <span class="side-label">Look mode</span>
-              <div class="mode-menu" id="generationModeMenu">
-                <button class="mode-menu-button" id="generationModeButton" type="button">${lookSettingsLabel()} ▾</button>
-                <div class="mode-menu-list" role="menu">
-                  <div class="mode-section">
-                    <span class="mode-section-label">Preview</span>
-                    <button class="mode-choice ${state.previewMode === "paper" ? "is-active" : ""}" data-preview-mode="paper" type="button">Paper</button>
-                    <button class="mode-choice ${state.previewMode === "board" ? "is-active" : ""}" data-preview-mode="board" type="button">Board</button>
-                  </div>
-                  <div class="mode-section">
-                    <span class="mode-section-label">Output</span>
-                    <button class="mode-choice ${state.generationMode === "look" ? "is-active" : ""}" data-generation-mode="look" type="button">One look</button>
-                    <button class="mode-choice ${state.generationMode === "separate" ? "is-active" : ""}" data-generation-mode="separate" type="button">Per item</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ` : ""}
-          ${selectedItems}
+          ${renderSelectedItemsList()}
         `;
 
-        panel.querySelectorAll("[data-item-source]").forEach((button) => {
-          button.addEventListener("click", () => {
-            state.itemSource = button.dataset.itemSource;
-            render();
-          });
-        });
-        panel.querySelectorAll("[data-library-display-mode]").forEach((button) => {
-          button.addEventListener("click", () => {
-            state.libraryDisplayMode = button.dataset.libraryDisplayMode;
-            render();
-          });
-        });
-        panel.querySelectorAll("[data-library-id]").forEach((button) => {
-          button.addEventListener("click", async () => {
-            await addLibraryItem(button.dataset.libraryId);
-          });
-        });
         const addItemCard = document.querySelector("#addItemCard");
         if (addItemCard) {
           addItemCard.addEventListener("click", () => {
@@ -1963,7 +2013,67 @@
             removeItem(Number(button.dataset.removeItem));
           });
         });
-        panel.querySelectorAll("[data-item-type-index]").forEach((select) => {
+        bindItemTypeSelects(panel);
+      }
+
+      function renderOutputPanel(panel) {
+        panel.innerHTML = `
+          <h3 class="side-title">Output</h3>
+          <div class="output-options" aria-label="Output mode">
+            <button class="output-choice ${state.outputMode === "tryon" ? "is-active" : ""}" data-output-mode="tryon" type="button">
+              <strong>Try-on</strong>
+              <span>One realistic fitting result</span>
+            </button>
+            <button class="output-choice ${state.outputMode === "board" ? "is-active" : ""}" data-output-mode="board" type="button">
+              <strong>Outfit board</strong>
+              <span>Styled collage preview</span>
+            </button>
+            <button class="output-choice ${state.outputMode === "full" ? "is-active" : ""}" data-output-mode="full" type="button">
+              <strong>Full look</strong>
+              <span>Experimental layered try-on</span>
+            </button>
+          </div>
+          ${renderSelectedItemsList({ compact: true, removable: false })}
+        `;
+
+        panel.querySelectorAll("[data-output-mode]").forEach((button) => {
+          button.addEventListener("click", () => {
+            setOutputMode(button.dataset.outputMode);
+          });
+        });
+        bindItemTypeSelects(panel);
+      }
+
+      function renderSelectedItemsList(options = {}) {
+        const compact = Boolean(options.compact);
+        const removable = options.removable !== false;
+        if (!state.items.length) {
+          return "";
+        }
+        return `
+          <div class="selected-items ${compact ? "is-compact" : ""}" aria-label="Selected items">
+            ${state.items.map((item, index) => `
+              <article class="selected-item-card">
+                <span class="selected-item-index">${String(index + 1).padStart(2, "0")}</span>
+                <img class="selected-item-thumb" src="${item.displayUrl || item.url}" alt="" />
+                <span class="selected-item-copy">
+                  <strong>${displayItemType(item.itemType)}</strong>
+                  <small>${item.classifierSource === "fallback" || item.itemType === "unknown" ? "Manual check" : `Auto · ${item.classifierSource || "visual"}`}</small>
+                  <select class="item-type-select" data-item-type-index="${index}" aria-label="Item type">
+                    ${itemTypes.map(([value, label]) => `
+                      <option value="${value}" ${item.itemType === value ? "selected" : ""}>${label}</option>
+                    `).join("")}
+                  </select>
+                </span>
+                ${removable ? `<button class="selected-remove" data-remove-item="${index}" type="button" aria-label="Remove item">×</button>` : ""}
+              </article>
+            `).join("")}
+          </div>
+        `;
+      }
+
+      function bindItemTypeSelects(root = document) {
+        root.querySelectorAll("[data-item-type-index]").forEach((select) => {
           select.addEventListener("change", () => {
             const item = state.items[Number(select.dataset.itemTypeIndex)];
             if (!item) {
@@ -1974,37 +2084,52 @@
             item.classifierSource = "manual";
             state.resultStatus = "idle";
             state.results = [];
-            state.done.generate = false;
+            state.done.output = false;
             render();
           });
         });
+      }
 
-        if (state.items.length > 1) {
-          const modeMenu = document.querySelector("#generationModeMenu");
-          document.querySelector("#generationModeButton").addEventListener("click", (event) => {
-            event.stopPropagation();
-            modeMenu.classList.toggle("is-open");
-          });
-          panel.querySelectorAll("[data-generation-mode]").forEach((button) => {
-            button.addEventListener("click", () => {
-              state.generationMode = button.dataset.generationMode;
-              state.resultStatus = "idle";
-              state.results = [];
-              state.done.generate = false;
-              render();
-            });
-          });
-          panel.querySelectorAll("[data-preview-mode]").forEach((button) => {
-            button.addEventListener("click", () => {
-              state.previewMode = button.dataset.previewMode;
-              state.resultStatus = "idle";
-              state.results = [];
-              state.done.generate = false;
-              render();
-            });
-          });
-        }
+      function setOutputMode(mode) {
+        state.outputMode = mode;
+        state.previewMode = mode === "board" ? "board" : "paper";
+        state.generationMode = mode === "full" ? "look" : "separate";
+        state.resultStatus = "idle";
+        state.results = [];
+        state.resultError = "";
+        state.done.output = false;
+        render();
+      }
 
+      function renderResultPanel(panel) {
+        const resultItems = state.results.length ? state.results.map((result, index) => `
+          <article class="selected-item-card result-list-card">
+            <span class="selected-item-index">${String(index + 1).padStart(2, "0")}</span>
+            <img class="selected-item-thumb" src="${result.imageUrl}" alt="" />
+            <span class="selected-item-copy">
+              <strong>Result</strong>
+              <small>${result.itemName}</small>
+            </span>
+          </article>
+        `).join("") : "";
+
+        panel.innerHTML = `
+          <h3 class="side-title">${state.resultStatus === "error" ? "Try again" : "Results"}</h3>
+          ${resultItems}
+          <button class="next-button result-side-button" id="tryAgainButton" type="button">${state.resultStatus === "loading" ? "Generating" : "Try again"}</button>
+        `;
+
+        document.querySelector("#tryAgainButton").addEventListener("click", () => {
+          if (state.resultStatus === "loading") {
+            return;
+          }
+          state.current = "output";
+          state.resultStatus = "idle";
+          state.results = [];
+          state.resultError = "";
+          state.done.output = false;
+          render();
+        });
       }
 
       function removeItem(index) {
@@ -2016,7 +2141,7 @@
         state.resultStatus = "idle";
         state.results = [];
         state.resultError = "";
-        state.done.generate = false;
+        state.done.output = false;
         render();
       }
 
@@ -2028,22 +2153,26 @@
       function render() {
         document.querySelectorAll("[data-step]").forEach((button) => {
           const name = button.dataset.step;
-          button.classList.toggle("active", name === state.current);
+          const activeStep = state.current === "result" ? "output" : state.current;
+          button.classList.toggle("active", name === activeStep);
           button.classList.toggle("done", state.done[name]);
         });
 
-        document.querySelector("#progressCopy").textContent = state.done[state.current]
-          ? state.current === "generate" ? copy.generate.progress : "You can continue."
-          : copy[state.current].progress;
+        document.querySelector("#progressCopy").textContent = state.current === "result"
+          ? copy.result.progress
+          : state.done[state.current] ? "You can continue." : copy[state.current].progress;
 
         renderBoard();
         renderSidePanel();
 
-        if (state.current === "generate") {
+        if (state.current === "output") {
           nextButton.textContent = state.resultStatus === "loading"
             ? "Generating"
-            : state.resultStatus === "done" ? "Generate again" : "Generate try-on";
+            : "Generate try-on";
           nextButton.disabled = state.resultStatus === "loading" || !(state.done.person && state.done.items);
+        } else if (state.current === "result") {
+          nextButton.textContent = "Try again";
+          nextButton.disabled = state.resultStatus === "loading";
         } else {
           nextButton.textContent = "Next step";
           nextButton.disabled = !state.done[state.current];
@@ -2080,6 +2209,7 @@
         state.resultStatus = "idle";
         state.results = [];
         state.resultError = "";
+        state.current = "items";
         render();
       });
 
@@ -2093,7 +2223,12 @@
           const removalInput = await makeDisplayImage(dataUrl);
           const removed = await removeItemBackground(removalInput);
           const displayUrl = removed.displayUrl;
-          const classifierInput = await makeClassifierInput(displayUrl);
+          const displayClassifierInput = await makeClassifierInput(displayUrl);
+          const originalClassifierInput = await makeClassifierInput(dataUrl);
+          const classifierInput = {
+            image: displayClassifierInput.image || originalClassifierInput.image,
+            visualHint: bestVisualHint(displayClassifierInput.visualHint, originalClassifierInput.visualHint)
+          };
           const classified = await classifyItem(file, classifierInput);
           return {
             name: file.name,
@@ -2109,17 +2244,18 @@
         }));
         state.items.push(...items);
         state.done.items = true;
-        state.current = "generate";
+        state.current = "items";
         state.resultStatus = "idle";
         state.results = [];
         state.resultError = "";
+        state.done.output = false;
         itemsInput.value = "";
         render();
       });
 
       async function classifyItem(file, classifierInput) {
         try {
-          const response = await fetch("/api/classify-item", {
+          const response = await fetch(apiUrl("/api/classify-item"), {
             method: "POST",
             headers: {
               "Content-Type": "application/json"
@@ -2166,7 +2302,7 @@
       async function makeClassifierInput(dataUrl) {
         try {
           const image = await loadDataImage(dataUrl);
-          const maxSide = 512;
+          const maxSide = 256;
           const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
           const width = Math.max(1, Math.round(image.naturalWidth * scale));
           const height = Math.max(1, Math.round(image.naturalHeight * scale));
@@ -2179,7 +2315,7 @@
           context.drawImage(image, 0, 0, width, height);
           const visualHint = inferVisualItemType(context, width, height);
           return {
-            image: canvas.toDataURL("image/jpeg", 0.78),
+            image: canvas.toDataURL("image/jpeg", 0.6),
             visualHint
           };
         } catch {
@@ -2188,6 +2324,12 @@
             visualHint: null
           };
         }
+      }
+
+      function bestVisualHint(...hints) {
+        return hints
+          .filter(Boolean)
+          .sort((a, b) => Number(b.confidence || 0) - Number(a.confidence || 0))[0] || null;
       }
 
       function inferVisualItemType(context, width, height) {
@@ -2236,6 +2378,8 @@
         const boxHeight = maxY - minY + 1;
         const ratio = boxHeight / Math.max(boxWidth, 1);
         const fill = count / Math.max(boxWidth * boxHeight, 1);
+        const touchesBottom = maxY > height * 0.86;
+        const touchesTop = minY < height * 0.18;
         const centerStart = Math.floor(minX + boxWidth * 0.42);
         const centerEnd = Math.ceil(minX + boxWidth * 0.58);
         const centerColumnAverage = columnCounts
@@ -2247,10 +2391,10 @@
         ) / Math.max(Math.floor(boxWidth * 0.6), 1);
         const hasLegGap = sideColumnAverage > 0 && centerColumnAverage / sideColumnAverage < 0.7;
 
-        if (ratio > 1.12 && (fill < 0.82 || hasLegGap)) {
+        if (ratio > 1.06 && (fill < 0.86 || hasLegGap || (touchesTop && touchesBottom))) {
           return {
             type: "pants",
-            confidence: hasLegGap ? 0.8 : 0.74,
+            confidence: hasLegGap ? 0.86 : 0.78,
             source: "foreground-shape",
             ratio: Number(ratio.toFixed(2)),
             fill: Number(fill.toFixed(2)),
@@ -2319,12 +2463,28 @@
         return sample[0] * 0.299 + sample[1] * 0.587 + sample[2] * 0.114;
       }
 
+      function apiUrl(path) {
+        if (window.location.protocol === "file:") {
+          return `http://localhost:4173${path}`;
+        }
+        return path;
+      }
+
       nextButton.addEventListener("click", () => {
-        if (state.current === "generate") {
+        if (state.current === "output") {
           if (!state.done.person || !state.done.items) {
             return;
           }
           generateTryOns();
+          return;
+        }
+        if (state.current === "result") {
+          state.current = "output";
+          state.resultStatus = "idle";
+          state.results = [];
+          state.resultError = "";
+          state.done.output = false;
+          render();
           return;
         }
         if (!state.done[state.current]) {
@@ -2338,20 +2498,29 @@
         state.resultError = "";
         state.results = [];
         state.generatingIndex = 0;
-        state.done.generate = false;
+        state.current = "result";
+        state.done.output = false;
         render();
 
-        const failures = [];
-        const generationItems = state.generationMode === "look" ? selectLookItems() : state.items;
-        if (!generationItems.length) {
-          state.resultStatus = "error";
-          state.resultError = "No supported garment item found. Shoes, bags, and hats need a styled-image provider later.";
-          state.done.generate = false;
+        if (state.outputMode === "board") {
+          state.previewMode = "board";
+          state.resultStatus = "done";
+          state.done.output = true;
           render();
           return;
         }
 
-        if (state.generationMode === "look") {
+        const failures = [];
+        const generationItems = state.outputMode === "full" ? selectLookItems() : selectTryOnItems();
+        if (!generationItems.length) {
+          state.resultStatus = "error";
+          state.resultError = "No supported garment item found. Shoes, bags, and hats need a styled-image provider later.";
+          state.done.output = false;
+          render();
+          return;
+        }
+
+        if (state.outputMode === "full") {
           await generateCompleteLook(generationItems, failures);
         } else {
           await generateSeparateTests(generationItems, failures);
@@ -2359,11 +2528,11 @@
 
         if (state.results.length) {
           state.resultStatus = "done";
-          state.done.generate = true;
+          state.done.output = true;
         } else {
           state.resultStatus = "error";
           state.resultError = failures.join(" / ") || "Generation failed.";
-          state.done.generate = false;
+          state.done.output = false;
         }
         render();
       }
@@ -2407,7 +2576,7 @@
       }
 
       async function requestTryOn(item, personImage) {
-        const response = await fetch("/api/tryon", {
+        const response = await fetch(apiUrl("/api/tryon"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -2450,6 +2619,14 @@
         return priority
           .map((type) => state.items.find((item) => item.itemType === type))
           .filter(Boolean);
+      }
+
+      function selectTryOnItems() {
+        const priority = ["dress", "top", "pants", "skirt"];
+        const item = priority
+          .map((type) => state.items.find((candidate) => candidate.itemType === type))
+          .find(Boolean);
+        return item ? [item] : [];
       }
 
       function lookResultName(items) {

@@ -26,6 +26,11 @@ const mimeTypes = {
 const server = http.createServer(async (request, response) => {
   try {
     const url = new URL(request.url, `http://${request.headers.host}`);
+    if (request.method === "OPTIONS") {
+      response.writeHead(204, corsHeaders());
+      response.end();
+      return;
+    }
 
     if (url.pathname === "/api/config" && request.method === "GET") {
       const classifierModels = process.env.HF_ITEM_CLASSIFIER_MODELS || process.env.HF_ITEM_CLASSIFIER_MODEL || "patrickjohncyh/fashion-clip,Marqo/marqo-fashionCLIP,openai/clip-vit-large-patch14";
@@ -152,10 +157,19 @@ function readJsonBody(request) {
 
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, {
+    ...corsHeaders(),
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store"
   });
   response.end(JSON.stringify(payload));
+}
+
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization"
+  };
 }
 
 server.listen(port, () => {

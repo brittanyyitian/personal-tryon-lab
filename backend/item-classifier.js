@@ -238,11 +238,11 @@ function classifyWithLocalHints({ fileName, image, visualHint }) {
   const dimensions = readImageDimensions(image);
   if (dimensions) {
     const ratio = dimensions.height / Math.max(dimensions.width, 1);
-    if (ratio > 1.85) {
+    if (ratio > 1.18) {
       return {
         type: "pants",
         label: LABELS.pants,
-        confidence: 0.48,
+        confidence: 0.58,
         source: "shape"
       };
     }

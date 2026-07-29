@@ -1,8 +1,15 @@
 function sendJson(response, statusCode, payload) {
   response.statusCode = statusCode;
+  setCorsHeaders(response);
   response.setHeader("Content-Type", "application/json; charset=utf-8");
   response.setHeader("Cache-Control", "no-store");
   response.end(JSON.stringify(payload));
+}
+
+function setCorsHeaders(response) {
+  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 }
 
 async function readJsonBody(request) {
@@ -37,11 +44,23 @@ async function readJsonBody(request) {
 }
 
 function sendMethodNotAllowed(response, methods) {
+  setCorsHeaders(response);
   response.setHeader("Allow", methods.join(", "));
   sendJson(response, 405, { error: "Method not allowed." });
 }
 
+function handleOptions(request, response) {
+  if (request.method !== "OPTIONS") {
+    return false;
+  }
+  setCorsHeaders(response);
+  response.statusCode = 204;
+  response.end();
+  return true;
+}
+
 module.exports = {
+  handleOptions,
   readJsonBody,
   sendJson,
   sendMethodNotAllowed
