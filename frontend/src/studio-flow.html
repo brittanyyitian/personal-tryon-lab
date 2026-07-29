@@ -592,7 +592,7 @@
 
       .source-tabs {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         overflow: hidden;
         border: 1px solid var(--line);
         border-radius: 999px;
@@ -861,6 +861,75 @@
         font-weight: 900;
         letter-spacing: 0.04em;
         text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .selected-items {
+        display: grid;
+        gap: 14px;
+      }
+
+      .selected-item-card {
+        display: grid;
+        grid-template-columns: 46px 62px 1fr 32px;
+        gap: 14px;
+        align-items: center;
+        min-height: 104px;
+        padding: 16px;
+        border-radius: 14px;
+        background: #efeeeb;
+      }
+
+      .selected-item-index {
+        font-family: var(--serif);
+        font-size: 34px;
+        line-height: 1;
+      }
+
+      .selected-item-thumb {
+        width: 62px;
+        height: 62px;
+        object-fit: contain;
+      }
+
+      .selected-item-copy {
+        min-width: 0;
+      }
+
+      .selected-item-copy strong,
+      .selected-item-copy small {
+        display: block;
+        text-transform: uppercase;
+      }
+
+      .selected-item-copy strong {
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: 0.03em;
+      }
+
+      .selected-item-copy small {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .selected-remove {
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(16, 16, 16, 0.14);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.42);
+        color: var(--ink);
+        font-size: 22px;
+        line-height: 1;
         cursor: pointer;
       }
 
@@ -1141,7 +1210,7 @@
         results: [],
         resultError: "",
         generatingIndex: 0,
-        itemSource: "library",
+        itemSource: "upload",
         libraryDisplayMode: "model",
         previewMode: "paper",
         generationMode: "look",
@@ -1185,6 +1254,7 @@
       const personInput = document.querySelector("#personInput");
       const itemsInput = document.querySelector("#itemsInput");
       const itemTypes = [
+        ["unknown", "Check type"],
         ["top", "Top"],
         ["pants", "Pants"],
         ["skirt", "Skirt"],
@@ -1746,6 +1816,9 @@
 
       function renderSidePanel() {
         const panel = document.querySelector("#itemPanel");
+        if (state.itemSource === "library") {
+          state.itemSource = "upload";
+        }
 
         if (state.current === "person") {
           panel.innerHTML = `
@@ -1812,10 +1885,29 @@
             </span>
           </button>
         `;
+        const selectedItems = state.items.length ? `
+          <div class="selected-items" aria-label="Selected items">
+            ${state.items.map((item, index) => `
+              <article class="selected-item-card">
+                <span class="selected-item-index">${String(index + 1).padStart(2, "0")}</span>
+                <img class="selected-item-thumb" src="${item.displayUrl || item.url}" alt="" />
+                <span class="selected-item-copy">
+                  <strong>${displayItemType(item.itemType)}</strong>
+                  <small>${item.classifierSource === "fallback" || item.itemType === "unknown" ? "Manual check needed" : `Auto · ${item.classifierSource || "visual"}`}</small>
+                  <select class="item-type-select" data-item-type-index="${index}" aria-label="Item type">
+                    ${itemTypes.map(([value, label]) => `
+                      <option value="${value}" ${item.itemType === value ? "selected" : ""}>${label}</option>
+                    `).join("")}
+                  </select>
+                </span>
+                <button class="selected-remove" data-remove-item="${index}" type="button" aria-label="Remove item">×</button>
+              </article>
+            `).join("")}
+          </div>
+        ` : "";
 
         panel.innerHTML = `
           <div class="source-tabs">
-            <button class="source-tab ${state.itemSource === "library" ? "is-active" : ""}" data-item-source="library" type="button">AI Library</button>
             <button class="source-tab ${state.itemSource === "upload" ? "is-active" : ""}" data-item-source="upload" type="button">Upload</button>
             <button class="source-tab ${state.itemSource === "link" ? "is-active" : ""}" data-item-source="link" type="button">Link</button>
           </div>
@@ -1840,6 +1932,7 @@
               </div>
             </div>
           ` : ""}
+          ${selectedItems}
         `;
 
         panel.querySelectorAll("[data-item-source]").forEach((button) => {
@@ -1865,6 +1958,26 @@
             itemsInput.click();
           });
         }
+        panel.querySelectorAll("[data-remove-item]").forEach((button) => {
+          button.addEventListener("click", () => {
+            removeItem(Number(button.dataset.removeItem));
+          });
+        });
+        panel.querySelectorAll("[data-item-type-index]").forEach((select) => {
+          select.addEventListener("change", () => {
+            const item = state.items[Number(select.dataset.itemTypeIndex)];
+            if (!item) {
+              return;
+            }
+            item.itemType = select.value;
+            item.label = displayItemType(select.value).toUpperCase();
+            item.classifierSource = "manual";
+            state.resultStatus = "idle";
+            state.results = [];
+            state.done.generate = false;
+            render();
+          });
+        });
 
         if (state.items.length > 1) {
           const modeMenu = document.querySelector("#generationModeMenu");
@@ -2026,6 +2139,13 @@
                 source: classifierInput.visualHint.source || "visual"
               };
             }
+            if (result.source === "fallback") {
+              return {
+                type: "unknown",
+                label: displayItemType("unknown"),
+                source: "fallback"
+              };
+            }
             return {
               type: result.type,
               label: result.label || displayItemType(result.type),
@@ -2035,7 +2155,7 @@
         } catch {
           // Keep upload flow unblocked if classification fails.
         }
-        const fallbackType = classifierInput.visualHint?.type || "top";
+        const fallbackType = classifierInput.visualHint?.type || "unknown";
         return {
           type: fallbackType,
           label: displayItemType(fallbackType),
@@ -2072,11 +2192,13 @@
 
       function inferVisualItemType(context, width, height) {
         const data = context.getImageData(0, 0, width, height).data;
+        const background = sampleBackgroundColor(data, width, height);
         let minX = width;
         let minY = height;
         let maxX = -1;
         let maxY = -1;
         let count = 0;
+        const columnCounts = new Array(width).fill(0);
 
         for (let y = 0; y < height; y += 1) {
           for (let x = 0; x < width; x += 1) {
@@ -2090,7 +2212,10 @@
             const blue = data[index + 2];
             const max = Math.max(red, green, blue);
             const min = Math.min(red, green, blue);
-            const isBackground = red > 232 && green > 232 && blue > 232 && max - min < 20;
+            const distance = Math.hypot(red - background.red, green - background.green, blue - background.blue);
+            const isNearWhite = red > 232 && green > 232 && blue > 232 && max - min < 22;
+            const isNearSampledBackground = distance < 28 && max > 186;
+            const isBackground = isNearWhite || isNearSampledBackground;
             if (isBackground) {
               continue;
             }
@@ -2099,6 +2224,7 @@
             maxX = Math.max(maxX, x);
             maxY = Math.max(maxY, y);
             count += 1;
+            columnCounts[x] += 1;
           }
         }
 
@@ -2110,13 +2236,25 @@
         const boxHeight = maxY - minY + 1;
         const ratio = boxHeight / Math.max(boxWidth, 1);
         const fill = count / Math.max(boxWidth * boxHeight, 1);
-        if (ratio > 1.32 && fill < 0.72) {
+        const centerStart = Math.floor(minX + boxWidth * 0.42);
+        const centerEnd = Math.ceil(minX + boxWidth * 0.58);
+        const centerColumnAverage = columnCounts
+          .slice(centerStart, centerEnd + 1)
+          .reduce((sum, value) => sum + value, 0) / Math.max(centerEnd - centerStart + 1, 1);
+        const sideColumnAverage = (
+          columnCounts.slice(minX, Math.floor(minX + boxWidth * 0.3)).reduce((sum, value) => sum + value, 0) +
+          columnCounts.slice(Math.ceil(minX + boxWidth * 0.7), maxX + 1).reduce((sum, value) => sum + value, 0)
+        ) / Math.max(Math.floor(boxWidth * 0.6), 1);
+        const hasLegGap = sideColumnAverage > 0 && centerColumnAverage / sideColumnAverage < 0.7;
+
+        if (ratio > 1.12 && (fill < 0.82 || hasLegGap)) {
           return {
             type: "pants",
-            confidence: 0.72,
+            confidence: hasLegGap ? 0.8 : 0.74,
             source: "foreground-shape",
             ratio: Number(ratio.toFixed(2)),
-            fill: Number(fill.toFixed(2))
+            fill: Number(fill.toFixed(2)),
+            legGap: Number((centerColumnAverage / Math.max(sideColumnAverage, 1)).toFixed(2))
           };
         }
         if (ratio < 0.58 && fill < 0.7) {
@@ -2128,7 +2266,7 @@
             fill: Number(fill.toFixed(2))
           };
         }
-        if (ratio >= 0.58 && ratio <= 1.32) {
+        if (ratio >= 0.58 && ratio <= 1.18 && fill > 0.28) {
           return {
             type: "top",
             confidence: 0.62,
@@ -2138,6 +2276,47 @@
           };
         }
         return null;
+      }
+
+      function sampleBackgroundColor(data, width, height) {
+        const samples = [];
+        const sampleSize = Math.max(4, Math.floor(Math.min(width, height) * 0.06));
+        const zones = [
+          [0, 0],
+          [width - sampleSize, 0],
+          [0, height - sampleSize],
+          [width - sampleSize, height - sampleSize]
+        ];
+        zones.forEach(([startX, startY]) => {
+          for (let y = Math.max(0, startY); y < Math.min(height, startY + sampleSize); y += 1) {
+            for (let x = Math.max(0, startX); x < Math.min(width, startX + sampleSize); x += 1) {
+              const index = (y * width + x) * 4;
+              if (data[index + 3] < 24) {
+                continue;
+              }
+              samples.push([data[index], data[index + 1], data[index + 2]]);
+            }
+          }
+        });
+        if (!samples.length) {
+          return { red: 255, green: 255, blue: 255 };
+        }
+        samples.sort((a, b) => brightness(b) - brightness(a));
+        const lightSamples = samples.slice(0, Math.max(1, Math.floor(samples.length * 0.35)));
+        const totals = lightSamples.reduce((sum, sample) => ({
+          red: sum.red + sample[0],
+          green: sum.green + sample[1],
+          blue: sum.blue + sample[2]
+        }), { red: 0, green: 0, blue: 0 });
+        return {
+          red: totals.red / lightSamples.length,
+          green: totals.green / lightSamples.length,
+          blue: totals.blue / lightSamples.length
+        };
+      }
+
+      function brightness(sample) {
+        return sample[0] * 0.299 + sample[1] * 0.587 + sample[2] * 0.114;
       }
 
       nextButton.addEventListener("click", () => {

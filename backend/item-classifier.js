@@ -1,6 +1,7 @@
 const ITEM_TYPES = ["top", "pants", "skirt", "dress", "shoes", "bag", "hat"];
 
 const LABELS = {
+  unknown: "Check type",
   top: "Top",
   pants: "Pants",
   skirt: "Skirt",
@@ -64,7 +65,7 @@ async function classifyItemImage(payload) {
 
 function shouldTrustRemote(remote, local) {
   if (!local || local.source === "fallback") {
-    return true;
+    return Number(remote.confidence || 0) >= 0.62;
   }
   if (remote.type === local.type) {
     return true;
@@ -256,8 +257,8 @@ function classifyWithLocalHints({ fileName, image, visualHint }) {
   }
 
   return {
-    type: "top",
-    label: LABELS.top,
+    type: "unknown",
+    label: LABELS.unknown,
     confidence: 0.3,
     source: "fallback"
   };
